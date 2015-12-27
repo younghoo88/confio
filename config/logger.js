@@ -11,7 +11,7 @@ var logger = new winston.Logger({
 logger.add(require('winston-daily-rotate-file'), {
   level: 'debug',
   dirname: '../logs',
-  filename: 'app-debug',
+  filename: '../logs/app-debug',
   datePattern: '.yyyy-MM-dd.log',
   maxsize: 1024 * 1024 * 10,
   timestamp: true

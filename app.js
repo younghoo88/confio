@@ -1,15 +1,24 @@
 var express = require('express');
 var path = require('path');
-var favicon = require('serve-favicon');
 var logger = require('morgan');
+var favicon = require('serve-favicon');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
+// Custom mount point
+var user = require('./routes/user');
+var conference = require('./routes/conference');
+var detail = require('./routes/detail');
+
 var app = express();
 
+/**
+ * 다른 모듈 파일에서도 winston logger를 선언없이 사용하기 위해 전역으로 정의함.
+ * @type {winston.Logger|*|exports|module.exports}
+ */
 global.logger = require('./config/logger');
 
 // view engine setup
@@ -25,7 +34,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
-app.use('/users', users);
+app.use('/user', user);
+app.use('/conference', conference);
+app.use('/detail', detail);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
