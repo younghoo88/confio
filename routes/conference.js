@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var cuid = require('cuid');
 
 function createConference(req, res, next) {
 
@@ -11,34 +12,40 @@ function createConference(req, res, next) {
       next(err);
       return;
     }
+    // 컨퍼런스 입장 코드 생성
+    var conferenceCode = cuid.slug();
 
-    var reqBody = [
+    var valuesToBeInserted = [
       req.body.title,
       req.body.start_time,
       req.body.end_time,
       req.body.description,
       req.body.address,
       req.body.latitude,
-      req.body.longitude
+      req.body.longitude,
+      conferenceCode
     ];
 
     var insertQuery = 'INSERT INTO conference ' +
-                      '(title, start_time, end_time, description, address, latitude, longitude) ' +
-                      'VALUES (?, ?, ?, ?, ?, ?, ?)';
+                      '(title, start_time, end_time, description, address, latitude, longitude, code) ' +
+                      'VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
-    connection.query(insertQuery, reqBody, function(err, info) {
+    connection.query(insertQuery, valuesToBeInserted, function(err, info) {
+
       if (err) {
         global.logger.error(err);
         connection.release();
         next(err);
         return;
       }
+
       var result = {
         success : 1,
         result : {
           message : '컨퍼런스가 정상적으로 등록되었습니다.'
         }
       };
+
       res.json(result);
       global.logger.debug('데이터베이스 연결을 종료합니다.');
       connection.release();
