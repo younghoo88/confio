@@ -4,21 +4,23 @@ var logger = require('morgan');
 var favicon = require('serve-favicon');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var mysql = require('mysql');
+var dbConfig = require('./config/database');
 
+/**
+ * 다른 모듈 파일에서도 mysql connectionPool과 winston logger를 선언없이 사용하기 위해 전역으로 정의함.
+ */
+global.connectionPool = mysql.createPool(dbConfig);
+global.logger = require('./config/logger');
+
+// Mount Point
 var routes = require('./routes/index');
-
 // Custom mount point
 var user = require('./routes/user');
 var conference = require('./routes/conference');
 var detail = require('./routes/detail');
 
 var app = express();
-
-/**
- * 다른 모듈 파일에서도 winston logger를 선언없이 사용하기 위해 전역으로 정의함.
- * @type {winston.Logger|*|exports|module.exports}
- */
-global.logger = require('./config/logger');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
