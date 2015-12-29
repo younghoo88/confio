@@ -1,5 +1,8 @@
 var express = require('express');
 var router = express.Router();
+var app = require('express')();
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
 
 function getSession(req, res, next) {
   var conference_id = req.params.conference_id;
@@ -9,6 +12,18 @@ function getSession(req, res, next) {
   global.logger.debug('conference_id : ' + conference_id);
   global.logger.debug('track_id : ' + track_id);
   global.logger.debug('session_id : ' + session_id);
+
+  // 컨퍼런스 기간이 끝났는지 확인(소켓 서버에 접속하지 못하게 해야하므로)
+  var name = '/' + conference_id + '/' + track_id + '/' + session_id;
+  var nameSpace = io.of(name);
+  nameSpace.on('connection', function(socket) {
+    global.logger.debug('connected namespace : ' + name);
+    socket.on('fromClientMessage', function(data) {
+      global.logger.debug('received from client [id]: ' + data.id);
+      global.logger.debug('received from client [content]: ' + data.content);
+      socket.emit('fromServerMessage', data);
+    });
+  });
 
   var result = {
     success : 1,
