@@ -2,6 +2,11 @@ var express = require('express');
 var router = express.Router();
 
 function createConference(req, res, next) {
+
+  var conference_id = req.body.conference_id;
+  var track_id = req.body.track_id;
+  var session_id = req.body.session_id;
+
   var result = {
     success : 1,
     result : {

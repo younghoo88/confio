@@ -1,5 +1,21 @@
-extends layout
+html
+  head
+    script(src='https://cdn.socket.io/socket.io-1.3.7.js')
+    script.
+      window.onload = function() {
+        var socket = io.connect("http://localhost:8080");
+        socket.emit('join', {room : '/#{conference_id}/#{track_id}/#{session_id}'});
+        var btn = document.querySelector("#btn");
+          btn.addEventListener("click", function () {
+            // console.log('send message');
+            socket.emit("fromClient", {msg: "hello world", time : new Date()});
+          });
+        socket.on("fromServer", function (data) {
+          console.log('received from server' + data.msg + ' at ' + data.time);
+        });
+      };
 
-block content
-  h1= title
-  p Welcome to #{title}
+  body
+    div
+      .btn_container
+        button#btn Send to Server

@@ -1,30 +1,54 @@
 var express = require('express');
 var router = express.Router();
-var app = require('express')();
+var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+server.listen(8080); // 소켓 서버 구동
+
+/**
+ * Socket.io 구현부분
+ * 각 세션을 socket.io의 room 기능을 통해 구현하였다.
+ */
+// TODO : 컨퍼런스 기간이 끝난 이후에는 해당 room을 들어가지 못하게 구현해야할듯
+var count = 0;
+var rooms = [];
+io.on('connection', function(socket) {
+  // join event 처리
+  socket.on('join', function(data) { // room 정보 받음
+    rooms[data.room] = true;
+    socket.join(data.room);
+    global.logger.debug('전체 방 갯수 : ' + rooms.length);
+    global.logger.debug('room 정보 : ' + data.room);
+    socket.room = data.room; // 해당 소켓이 room 정보를
+    io.to(socket.room).emit('fromServer', {msg : socket.id + ' 이 방에 입장하였습니다.', time : new Date()});
+  });
+
+  // message 처리
+  socket.on('fromClient', function(data) {
+    global.logger.debug('received from client message : ' + data.msg + ' at ' + data.time);
+    io.to(socket.room).emit('fromServer', data); // 자신이 속한 room으로 data 전송
+  });
+
+  // disconnect event 처리
+  socket.on('disconnect', function(data) {
+    global.logger.debug('disconnect event 발생');
+    io.to(socket.room).emit('fromServer', {msg : socket.id + '님이 나가셨습니다.', time : new Date()});
+  });
+});
 
 function getSession(req, res, next) {
   var conference_id = req.params.conference_id;
   var track_id = req.params.track_id;
   var session_id = req.params.session_id;
 
-  global.logger.debug('conference_id : ' + conference_id);
-  global.logger.debug('track_id : ' + track_id);
-  global.logger.debug('session_id : ' + session_id);
+  global.logger.debug('/' + conference_id + '/' + track_id + '/' + session_id + ' 방에 입장하였습니다.');
 
-  // 컨퍼런스 기간이 끝났는지 확인(소켓 서버에 접속하지 못하게 해야하므로)
-  var name = '/' + conference_id + '/' + track_id + '/' + session_id;
-  var nameSpace = io.of(name);
-  nameSpace.on('connection', function(socket) {
-    global.logger.debug('connected namespace : ' + name);
-    socket.on('fromClientMessage', function(data) {
-      global.logger.debug('received from client [id]: ' + data.id);
-      global.logger.debug('received from client [content]: ' + data.content);
-      socket.emit('fromServerMessage', data);
-    });
-  });
+  // 페이지 렌더링
+  res.render('index', {conference_id : conference_id, track_id : track_id, session_id : session_id}); // client event용
 
+  // TODO : Database 연동부분 구현
+
+  /*
   var result = {
     success : 1,
     result : {
@@ -53,26 +77,12 @@ function getSession(req, res, next) {
     }
   };
   res.json(result);
+  */
 }
 
 function putMessage(req, res, next) {
-  // var userId = req.body.user_id;
-  // var content = req.body.content;
-
-  global.logger.debug('user_id : ' + req.body.user_id);
-  global.logger.debug('content : ' + req.body.content);
-
-  global.logger.debug('conference_id : ' + req.params.conference_id);
-  global.logger.debug('track_id : ' + req.params.track_id);
-  global.logger.debug('session_id : ' + req.params.session_id);
-
-  var result = {
-    success : 1,
-    result : {
-      message : '채팅 내용 입력'
-    }
-  };
-  res.json(result);
+  // TODO : 삭제 예정(Socket.io를 이용해 메시지를 주고받기 때문에 putMessage가 필요없어졌다.)
+  res.json({});
 }
 
 function getQuestion(req, res, next) {
