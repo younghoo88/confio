@@ -6,6 +6,10 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var mysql = require('mysql');
 var dbConfig = require('./config/database');
+var passport = require('passport');
+var flash = require('connect-flash');
+
+require('./config/passport')(passport);
 
 /**
  * 다른 모듈 파일에서도 mysql connectionPool과 winston logger를 선언없이 사용하기 위해 전역으로 정의함.
@@ -33,6 +37,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(passport.initialize());
+app.use(flash());
 
 app.use('/', routes);
 app.use('/user', user);
@@ -53,9 +59,11 @@ app.use(function(req, res, next) {
 if (app.get('env') === 'development') {
   app.use(function(err, req, res, next) {
     res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err
+    res.json({
+      success: 0,
+      result: {
+        message: err.message
+      }
     });
   });
 }

@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var passport = require('passport');
 
 /**
  * 회원가입
@@ -8,16 +9,36 @@ var router = express.Router();
  * @param next
  */
 function join(req, res, next) {
-  global.logger.debug('name : ' + req.body.name);
-  global.logger.debug('email : ' + req.body.email);
 
-  var result = {
-    success : 1,
-    result : {
-      message : '가입이 정상적으로 처리되었습니다.'
+  passport.authenticate('local-signup', function(err, user, info) {
+
+    if (err) {
+      global.logger.debug(err);
+      return next(err);
     }
-  };
-  res.json(result);
+
+    if (!user) {
+      global.logger.debug("passport.authenticate('local-signup') => 가입실패, 실패원인 : " + info);
+      return next({message : '중복된 이메일입니다.'});
+    }
+
+    req.logIn(user, function(err) {
+
+      if (err) {
+        global.logger.debug(err);
+        return next(err);
+      }
+
+      global.logger.debug("passport.authenticate('local-signup') => 가입성공");
+      var result = {
+        success : 1,
+        result : {
+          message : '가입이 정상적으로 처리되었습니다.'
+        }
+      };
+      res.json(result);
+    });
+  })(req, res, next);
 }
 
 /**
@@ -27,14 +48,33 @@ function join(req, res, next) {
  * @param next
  */
 function login(req, res, next) {
-  var result = {
-    success : 1,
-    result : {
-      message : '로그인이 정상적으로 되었습니다.',
-      email : req.body.email
+  passport.authenticate('local-login', function(err, user, info) {
+    if (err) {
+      global.logger.debug(err);
+      return next(err);
     }
-  };
-  res.json(result);
+
+    if (!user) {
+      global.logger.debug("passport.authenticate('local-login') => 로그인실패");
+      return next({message : '이메일이 중복되었거나 잘못된 비밀번호입니다.'});
+    }
+
+    req.logIn(user, function(err) {
+      if (err) {
+        global.logger.debug(err);
+        return next(err);
+      }
+      global.logger.debug("passport.authenticate('local-signup') => 로그인성공");
+      var result = {
+        success : 1,
+        result : {
+          message : '로그인이 정상적으로 되었습니다.',
+          email : req.body.email
+        }
+      };
+      res.json(result);
+    });
+  })(req, res, next);
 }
 
 /**
@@ -44,6 +84,8 @@ function login(req, res, next) {
  * @param next
  */
 function logout(req, res, next) {
+  global.logger.debug("logout => " + req.user);
+  req.logout();
   var result = {
     success : 1,
     result : {
@@ -128,6 +170,7 @@ function getMyConferenceList(req, res, next) {
 router.post('/', join);
 router.post('/login', login);
 router.get('/logout', logout);
+
 router.put('/change', editUser);
 router.get('/mailCheck/:email', checkEmail);
 router.delete('/delete', deleteUser);
