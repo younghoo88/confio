@@ -45,12 +45,13 @@ io.on('connection', function(socket) {
     roomInfo[data.room].push(socket.id);
 
     socket.join(data.room);
-
+    global.logger.debug('--------------------');
     global.logger.debug('room 정보 : ' + data.room);
     global.logger.debug('이용자 정보 : ' + roomInfo[data.room]);
     global.logger.debug('이용 인원 : ' + roomInfo[data.room].length);
     socket.room = data.room; // 해당 소켓이 room 정보를
     io.to(socket.room).emit('fromServer', {msg : socket.id + ' 이 방에 입장하였습니다.', time : new Date()});
+    global.logger.debug('--------------------');
   });
 
   // message 처리
@@ -87,11 +88,17 @@ io.on('connection', function(socket) {
 
   // disconnect event 처리
   socket.on('disconnect', function(data) {
+    global.logger.debug('--------------------');
     global.logger.debug('disconnect event 발생');
-    global.logger.debug('');
-    // var deleteIndex = roomInfo[socket.room].indexOf(socket.id);
-    roomInfo[socket.room].splice(deleteIndex, 1);
+    global.logger.debug('socket.room : ' + socket.room);
+    global.logger.debug('socket.id : ' + socket.id);
+    // TODO : undefined 처리
+    if (roomInfo[socket.room] !== undefined) {
+      var deleteIndex = roomInfo[socket.room].indexOf(socket.id);
+      roomInfo[socket.room].splice(deleteIndex, 1);
+    }
     io.to(socket.room).emit('fromServer', {msg : socket.id + '님이 나가셨습니다.', time : new Date()});
+    global.logger.debug('--------------------');
   });
 });
 
