@@ -257,7 +257,7 @@ function deleteSession(req, res, next) {
 function getConferenceInfo(req, res, next) {
 
   var conferenceId = req.params.conference_id;
-  var trackId = req.params.track_id;
+  // var trackId = req.body.track_id;
 
   process.nextTick(function() {
     async.waterfall([
@@ -268,6 +268,7 @@ function getConferenceInfo(req, res, next) {
             if (err) {
               // 에러처리
               err.message= '요청 에러';
+              connection.release();
               callback(err);
             }
             // conference 정보
@@ -286,7 +287,7 @@ function getConferenceInfo(req, res, next) {
                 // 콜백을 하든 넥스트를 하든
               }
 
-              if (rows.length() === 0) {
+              if (rows.length === 0) {
                 res.status(200).json({
                   success: 0,
                   message: '조회한 컨퍼런스는 삭제되었거나 정보가 없습니다'
@@ -304,7 +305,8 @@ function getConferenceInfo(req, res, next) {
           // 트랙정보 가져오기
           tracks : function(parallelCallback) {
             global.connectionPool.getConnection(function(err, connection) {
-              var selectTrackQuery = "SELECT track_id, conference_id, sequence, title, place, is_valid " +
+              //TODO : 나중에 sequnece -> sequence로 변경
+              var selectTrackQuery = "SELECT track_id, conference_id, sequnece, title, place, is_valid " +
                                       "FROM track " +
                                       "WHERE conference_id= ?",
                 placeHolders = [conferenceId];
@@ -312,10 +314,12 @@ function getConferenceInfo(req, res, next) {
               connection.query(selectTrackQuery, placeHolders, function(err, rows, fileds) {
                 if (err) {
                   connection.release();
-                  return callback(err);
+                  return parallelCallback(err);
                 }
-
-                callback(null, rows);
+                global.logger.debug('데이터베이스 연결 종료');
+                connection.release();
+                global.logger.debug('trackInfo : ' + rows);
+                parallelCallback(null, rows);
               });//end of connection query
             }); // end of global.pool.getconnection
           }, // end of function
@@ -325,34 +329,41 @@ function getConferenceInfo(req, res, next) {
               var selectSessionQuery = "SELECT session_id, participation_id, category_id, track_id, title, description, " +
                                         "presentation_url, start_time, end_time, is_valid " +
                                         "FROM session " +
-                                        "WHERE session_id = ? and is_valid=1";
-              var placeHolders = [trackId];
+                                        "WHERE track_id = ? and is_valid=1";
+              var placeHolders = [6];
               connection.query(selectSessionQuery, placeHolders, function(err, rows, fileds) {
                 if (err) {
                   connection.release();
-                  return callback(err);
+                  return parallelCallback(err);
                   // more clean error stuff
                 }
-
-                callback(null, rows);
+                global.logger.debug('sessionInfo : ' + rows);
+                parallelCallback(null, rows);
               }); //end of connection query
+              global.logger.debug('데이터베이스 연결 종료');
+              connection.release();
             });
-            connection.release();
           }
         }, function(err, results) {
           if (err) {
               callback(err);
           }
-          callback(null, confInfo, results['track'], results['session']);
+          // console.log(results);
+          global.logger.debug('results[track] : ' + results['tracks']);
+          global.logger.debug('results[session] : ' + results['sessions']);
+          callback(null, confInfo, results['tracks'], results['sessions']);
         }); // async.parallel
       },
       // 가져온 정보 가공하기
       function(confInfo, trackInfo, sessionInfo, callback) {
-        var processedConferenceInfo ={}; // confio 총 정리할 객체
+        global.logger.debug('trackInfo : ' + trackInfo);
+
+        //var processedConferenceInfo ={}; // confio 총 정리할 객체
         // if confInfo doesn't exist
-        if (confInfo === null)
-          processedConferenceInfo.confInfo = null;
-        processedConferenceInfo.confInfo = {
+        //if (confInfo === null) {
+        //  processedConferenceInfo.confInfo = null;
+        //}
+        var processedConferenceInfo = {
             "conferenceId" : confInfo.conference_id,
             "title" : confInfo.title,
             "startTime" : confInfo.start_time,
@@ -360,19 +371,22 @@ function getConferenceInfo(req, res, next) {
             "description" : confInfo.description,
             "address" : confInfo.address,
             "latitude" : confInfo.latitude,
-            "longtitude" : confInfo.longtitude,
+            "longitude" : confInfo.longitude,
             "code" : confInfo.code,
             "isOpen" :  confInfo.is_open,
             "isValid" : confInfo.is_vaild,
             "track" : []
         }; // finished processing confInfo
-        //started procesing trackInfo
+
+        //started processing trackInfo
         if(trackInfo === null) {
           processedConferenceInfo.track = null;
         } else {
           async.each(trackInfo, function(element, cb) {
+            // global.logger.debug(element);
             element.session = [];
             processedConferenceInfo.track.push(element);
+            global.logger.debug('processedConferenceInfo.track.session : ' + processedConferenceInfo.track[0].session);
             cb();
           }, function(err) {
             if (err) {
@@ -380,7 +394,9 @@ function getConferenceInfo(req, res, next) {
             }
           });
         } // end of else, which means ending of processing trackInfo
-
+        global.logger.debug('here');
+        console.log(processedConferenceInfo.track);
+        console.log(processedConferenceInfo.track.session);
         //started processing sessionInfo
         if(sessionInfo === null) {
           processedConferenceInfo.track.session = null;
@@ -395,87 +411,19 @@ function getConferenceInfo(req, res, next) {
           });
         }
         //finished processing sessionInfo
+        callback(processedConferenceInfo);
       }
     ], function(err, result) {
         if (err) {
-          connection.rollback(function() {
-            global.logger.error('from near line 352');
-            global.logger.error(err);
-            err.message = '정보 조회 중 오류 발생'
-            connection.release();
-            return next(err);
-          }); // end of connection.rollback
-        } //if
+          global.logger.error(err);
+          err.message = '컨퍼런스 정보 조회 중 오류 발생';
+          return next(err);
+        }
 
-      global.logger.debug('정보 조회 성공');
-      connection.release();
+        global.logger.debug('정보 조회 성공');
+        res.json(result);
     }); // end of async.waterfall
-
-
-    global.connectionPool.getConnection(function(err, connection) {
-      if (err) {
-        // 에러처리
-      }
-
-
-    }); // end of global.connectionPool.getConnection()
   }); // end of process.nextTick();
-  var result = {
-    success : 1,
-    result : {
-      message : '컨퍼런스 정보를 정상적으로 가져왔습니다.',
-      conference : {
-        id : 1,
-        title : 'NaverD2FEST',
-        start_time : '2015-01-06 08:00',
-        end_time : '2015-01-06 18:00',
-        description : '네이버 대학생 오픈소스 경진대회',
-        address : '경기도 성남시 분당구 네이버 그린팩토리',
-        latitude : '37.3595122',
-        longitude : '127.1052208',
-        track : [
-          {
-            id : 1,
-            order : 1,
-            title : '웹프로그래밍',
-            place : 'A홀',
-            session : [
-              {
-                id : 1,
-                title : 'Facebook React.js',
-                description : 'Facebook React.js에 대해서 알아봅니다.',
-                start_time : '2015-01-06 10:00',
-                end_time : '2015-01-06 12:00'
-              },
-              {
-                id : 2,
-                title : 'Angular.js',
-                description : 'Typescript와 함께 시작하는 Angular 2',
-                start_time : '2015-01-06 13:00',
-                end_time : '2015-01-06 15:00'
-              }
-            ]
-          },
-          {
-            id : 2,
-            order : 2,
-            title : '안드로이드 프로그래밍',
-            place : 'B홀',
-            session : [
-              {
-                id : 3,
-                title : 'Material Design',
-                description : '구글의 새로운 디자인 기준, Material Design에 대해 알아봅니다.',
-                start_time : '2015-01-06 10:00',
-                end_time : '2015-01-06 12:00'
-              }
-            ]
-          }
-        ]
-      }
-    }
-  };
-  res.json(result);
 }
 
 router.route('/')
