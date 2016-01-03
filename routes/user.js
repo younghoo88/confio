@@ -41,13 +41,7 @@ function join(req, res, next) {
   })(req, res, next);
 }
 
-/**
- * 로그인
- * @param req
- * @param res
- * @param next
- */
-function login(req, res, next) {
+function authenticateLocalLogin(req, res, next) {
   passport.authenticate('local-login', function(err, user, info) {
     if (err) {
       global.logger.debug(err);
@@ -65,16 +59,27 @@ function login(req, res, next) {
         return next(err);
       }
       global.logger.debug("passport.authenticate('local-signup') => 로그인성공");
-      var result = {
-        success : 1,
-        result : {
-          message : '로그인이 정상적으로 되었습니다.',
-          email : req.body.email
-        }
-      };
-      res.json(result);
+      next();
     });
   })(req, res, next);
+}
+
+
+/**
+ * 로그인
+ * @param req
+ * @param res
+ * @param next
+ */
+function login(req, res, next) {
+  var result = {
+    success : 1,
+    result : {
+      message : '로그인이 정상적으로 되었습니다.',
+      email : req.body.email
+    }
+  };
+  res.json(result);
 }
 
 /**
@@ -84,6 +89,11 @@ function login(req, res, next) {
  * @param next
  */
 function logout(req, res, next) {
+  // console.log(req);
+  global.logger.debug('passport isAuthenticated : ' + req.isAuthenticated());
+  console.log('req.session.passport.user : ' + req.session.passport.user);
+  console.log('req.session.passport : ' + req.session.passport);
+  console.log('req.session : ' + req.session);
   global.logger.debug("logout => " + req.user);
   req.logout();
   var result = {
@@ -102,6 +112,8 @@ function logout(req, res, next) {
  * @param next
  */
 function editUser(req, res, next) {
+
+
   var result = {
     success : 1,
     result : {
@@ -168,7 +180,7 @@ function getMyConferenceList(req, res, next) {
 }
 
 router.post('/', join);
-router.post('/login', login);
+router.post('/login', authenticateLocalLogin, login);
 router.get('/logout', logout);
 
 router.put('/change', editUser);

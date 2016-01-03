@@ -1,11 +1,12 @@
 var LocalStrategy = require('passport-local').Strategy;
 var bcrypt = require('bcrypt-nodejs');
 var async = require('async');
+var util = require('util');
 
 module.exports = function(passport) {
 
   passport.serializeUser(function(user, done) {
-    global.logger.debug('passport.serializeUser()', user);
+    global.logger.debug('passport.serializeUser() => user.user_id : ', user.user_id);
     done(null, user.user_id);
   });
 
@@ -16,7 +17,7 @@ module.exports = function(passport) {
       }
 
       var selectQuery = 'SELECT user_id, email, password ' +
-                        'FROM users ' +
+                        'FROM user ' +
                         'WHERE user_id = ?';
 
       connection.query(selectQuery, [id], function(err, rows, fields) {
@@ -25,7 +26,7 @@ module.exports = function(passport) {
         user.email = rows[0].email;
         user.password = rows[0].password;
         connection.release();
-        global.logger.debug('passport.deserializeUser()', user);
+        global.logger.debug('passport.deserializeUser() => ', util.inspect(user));
         return done(null, user);
       });
     });
@@ -103,7 +104,9 @@ module.exports = function(passport) {
                   return done(err);
                 }
 
-                newUser.id = result.insertId;
+                global.logger.debug('insert query가 수행되었습니다.');
+
+                newUser.user_id = result.insertId;
                 connection.release();
                 return done(null, newUser);
               }); // end of connection.query(insert)
@@ -155,7 +158,7 @@ module.exports = function(passport) {
               return done(null, false, '잘못된 이메일이나 비밀번호입니다.');
             }
 
-            global.logger.debug('bcrypt.compare() => ' + user.password + ' (' + user + ') ');
+            global.logger.debug('bcrypt.compare() => ' + user.password + ' (' + util.inspect(user) + ') ');
             return done(null, user);
           });
         }); // end of connection.query(select email)
