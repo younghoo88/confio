@@ -159,7 +159,7 @@ function addAnswerLike(req, res, next) {
 }
 
 router.get('/:conference_id/:track_id/:session_id', getSession);
-router.post('/:conference_id/:track_id/:session_id/chat', putMessage);
+// router.post('/:conference_id/:track_id/:session_id/chat', putMessage);
 router.get('/:conference_id/:track_id/:session_id/question/:question_id', getQuestion);
 router.route('/:conference_id/:track_id/:session_id/question')
   .post(addQuestion)
