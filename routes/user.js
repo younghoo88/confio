@@ -50,11 +50,11 @@ function authenticateLocalLogin(req, res, next) {
       return next(err);
     }
 
-    var user = {};
-    user.user_id = 8;
-    user.email = 'brown@naver.com';
-    user.password = '1234';
-
+    //var user = {};
+    //user.user_id = 8;
+    //user.email = 'brown@naver.com';
+    //user.password = '1234';
+    global.logger.debug('passport.authenticate() user : ' + user);
     if (!user) {
       global.logger.debug("passport.authenticate('local-login') => 로그인실패");
       return next({message : '이메일이 중복되었거나 잘못된 비밀번호입니다.'});
