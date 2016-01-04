@@ -4,6 +4,12 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var mongoose = require('mongoose');
+var session = require('../config/session').sessionMiddleware;
+var util = require('util');
+
+io.use(function(socket, next) {
+  session(socket.request, socket.request.res, next);
+});
 server.listen(8080); // 소켓 서버 구동
 
 /**
@@ -37,6 +43,8 @@ var savedMessage = new savedMessageModel();
 var roomInfo = {};
 
 io.on('connection', function(socket) {
+  global.logger.debug('socket session => ' + util.inspect(socket.request.session));
+
   // join event 처리
   socket.on('join', function(data) { // room 정보 받음
     if (!roomInfo.hasOwnProperty(data.room)) { // 최초 생성시
@@ -149,6 +157,8 @@ function putMessage(req, res, next) {
 }
 
 function getQuestion(req, res, next) {
+  global.logger.debug('req.session.user : ' + util.inspect(req.user)); // session 유지가 되므로 user정보를 읽어올 수 있다.
+
   var result = {
     success : 1,
     result : {

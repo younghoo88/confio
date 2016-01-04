@@ -8,16 +8,7 @@ var mysql = require('mysql');
 var dbConfig = require('./config/database');
 var passport = require('passport');
 var flash = require('connect-flash');
-var session = require('express-session');
-var SessionStore = require('express-mysql-session');
-var options = {
-  host : 'localhost',
-  port : 3306,
-  user : 'root',
-  password : '12345678',
-  database : 'confio',
-  useConnectionPooling : true
-};
+var session = require('./config/session').sessionMiddleware;
 
 require('./config/passport')(passport);
 
@@ -47,15 +38,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({
-  store : new SessionStore(options),
-  secret : '12345678',
-  cookie : {
-    maxAge : 86400000
-  },
-  resave : true,
-  saveUninitialized : true
-}));
+app.use(session);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
