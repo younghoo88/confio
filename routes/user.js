@@ -50,11 +50,8 @@ function authenticateLocalLogin(req, res, next) {
       return next(err);
     }
 
-    //var user = {};
-    //user.user_id = 8;
-    //user.email = 'brown@naver.com';
-    //user.password = '1234';
     global.logger.debug('passport.authenticate() user : ' + user);
+
     if (!user) {
       global.logger.debug("passport.authenticate('local-login') => 로그인실패");
       return next({message : '이메일이 중복되었거나 잘못된 비밀번호입니다.'});
@@ -181,9 +178,14 @@ function getMyConferenceList(req, res, next) {// TODO : 구현예정
   res.json(result);
 }
 
+function getLoginForm(req, res, next) {
+  global.logger.debug('entering the login form page');
+  res.render('login');
+}
+
 router.post('/', join);
+router.get('/login', getLoginForm);
 router.post('/login', authenticateLocalLogin, login);
-router.get('/login/:email/:password', authenticateLocalLogin, login);
 router.get('/logout', isLoggedIn, logout);
 router.put('/change', editUser);
 router.get('/mailCheck/:email', checkEmail);

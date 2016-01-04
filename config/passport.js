@@ -138,7 +138,7 @@ module.exports = function(passport) {
           return done(err);
         }
 
-        var selectQuery = 'SELECT user_id, email, password ' +
+        var selectQuery = 'SELECT user_id, name, email, password ' +
                           'FROM user ' +
                           'WHERE email = ?';
 
@@ -156,6 +156,7 @@ module.exports = function(passport) {
 
           var user = {};
           user.user_id = rows[0].user_id;
+          user.name = rows[0].name;
           user.email = rows[0].email;
           user.password = rows[0].password;
           connection.release();
