@@ -1,19 +1,50 @@
 var express = require('express');
 var router = express.Router();
+var cuid = require('cuid');
 
 function createConference(req, res, next) {
 
-  var conference_id = req.body.conference_id;
-  var track_id = req.body.track_id;
-  var session_id = req.body.session_id;
+  global.connectionPool.getConnection(function(err, connection) {
 
-  var result = {
-    success : 1,
-    result : {
-      message : '컨퍼런스 등록이 정상적으로 되었습니다.'
-    }
-  };
-  res.json(result);
+    // 컨퍼런스 입장 코드 생성
+    var conferenceCode = cuid.slug();
+
+    var valuesToBeInserted = [
+      req.body.title,
+      req.body.start_time,
+      req.body.end_time,
+      req.body.description,
+      req.body.address,
+      req.body.latitude,
+      req.body.longitude,
+      conferenceCode
+    ];
+
+    var insertQuery = 'INSERT INTO conference ' +
+                      '(title, start_time, end_time, description, address, latitude, longitude, code) ' +
+                      'VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+
+    connection.query(insertQuery, valuesToBeInserted, function(err, info) {
+
+      if (err) {
+        global.logger.error(err);
+        connection.release();
+        next(err);
+        return;
+      }
+
+      var result = {
+        success : 1,
+        result : {
+          message : '컨퍼런스가 정상적으로 등록되었습니다.'
+        }
+      };
+
+      res.json(result);
+      global.logger.debug('데이터베이스 연결을 종료합니다.');
+      connection.release();
+    });
+  });
 }
 
 function editConference(req, res, next) {
@@ -128,8 +159,8 @@ function getConferenceInfo(req, res, next) {
         end_time : '2015-01-06 18:00',
         description : '네이버 대학생 오픈소스 경진대회',
         address : '경기도 성남시 분당구 네이버 그린팩토리',
-        latitude : '127.1052208',
-        longitude : '37.3595122',
+        latitude : '37.3595122',
+        longitude : '127.1052208',
         track : [
           {
             id : 1,
