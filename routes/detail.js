@@ -55,7 +55,8 @@ io.on('connection', function(socket) {
     socket.join(data.room);
     global.logger.debug('--------------------');
     global.logger.debug('room 정보 : ' + data.room);
-    global.logger.debug('이용자 정보 : ' + roomInfo[data.room]);
+    global.logger.debug('이용자 소켓정보 : ' + roomInfo[data.room]);
+    global.logger.debug('이용자 id : ' + socket.request.session.passport.user);
     global.logger.debug('이용 인원 : ' + roomInfo[data.room].length);
     socket.room = data.room; // 해당 소켓이 room 정보를
     io.to(socket.room).emit('fromServer', {msg : socket.id + ' 이 방에 입장하였습니다.', time : new Date()});

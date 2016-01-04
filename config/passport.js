@@ -22,9 +22,12 @@ module.exports = function(passport) {
 
       connection.query(selectQuery, [id], function(err, rows, fields) {
         var user = {};
-        user.user_id = rows[0].user_id;
-        user.email = rows[0].email;
-        user.password = rows[0].password;
+        //user.user_id = rows[0].user_id;
+        //user.email = rows[0].email;
+        //user.password = rows[0].password;
+        user.user_id = 8;
+        user.email = 'brown@naver.com';
+        user.password = '1234';
         connection.release();
         global.logger.debug('passport.deserializeUser() => ', util.inspect(user));
         return done(null, user);
@@ -134,7 +137,10 @@ module.exports = function(passport) {
         var selectQuery = 'SELECT user_id, email, password ' +
                           'FROM user ' +
                           'WHERE email = ?';
-
+        var email = req.params.email;
+        var password = req.params.password;
+        global.logger.debug(email);
+        global.logger.debug(password);
         connection.query(selectQuery, [email], function(err, rows, fields) {
 
           if (err) {
