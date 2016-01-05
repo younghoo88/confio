@@ -6,6 +6,20 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var mysql = require('mysql');
 var dbConfig = require('./config/database');
+var passport = require('passport');
+var flash = require('connect-flash');
+var session = require('express-session');
+var SessionStore = require('express-mysql-session');
+var options = {
+  host : 'localhost',
+  port : 3306,
+  user : 'root',
+  password : '12345678',
+  database : 'confio',
+  useConnectionPooling : true
+};
+
+require('./config/passport')(passport);
 
 /**
  * 다른 모듈 파일에서도 mysql connectionPool과 winston logger를 선언없이 사용하기 위해 전역으로 정의함.
@@ -33,8 +47,20 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({
+  store : new SessionStore(options),
+  secret : '12345678',
+  cookie : {
+    maxAge : 86400000
+  },
+  resave : true,
+  saveUninitialized : true
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
 
-app.use('/', routes);
+// app.use('/', routes);
 app.use('/user', user);
 app.use('/conference', conference);
 app.use('/detail', detail);
@@ -53,9 +79,11 @@ app.use(function(req, res, next) {
 if (app.get('env') === 'development') {
   app.use(function(err, req, res, next) {
     res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err
+    res.json({
+      success: 0,
+      result: {
+        message: err.message
+      }
     });
   });
 }

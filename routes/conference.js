@@ -31,12 +31,6 @@ var  async = require('async');
 function createConference(req, res, next) {
   global.connectionPool.getConnection(function(err, connection) {
 
-    if (err) {
-      global.logger.error(err);
-      connection.release();
-      next(err);
-      return;
-    }
     // 컨퍼런스 입장 코드 생성
     var conferenceCode = cuid.slug();
     // conference table에 insert 될 객체
