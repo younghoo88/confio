@@ -41,18 +41,20 @@ var savedMessage = new savedMessageModel();
  * 각 세션을 socket.io의 room 기능을 통해 구현하였다.
  */
 // TODO : 컨퍼런스 기간이 끝난 이후에는 해당 room을 들어가지 못하게 구현해야할듯
+// TODO : 하나의 객체에 이 서비스의 모든 방정보를 담기보다는 다른 방법이 필요하다
 var roomInfo = {};
 
 io.on('connection', function(socket) {
   var session = socket.request.session;
-  var user = session.passport.user;
+  var user = session.passport.user; // session store에 저장된 user 객체(name, email, password 정보를 갖고 있다)
+  var numOfMessages = 2; // client에서 message fetching할때마다 보여줄 message 갯수(DEFAULT = 5)
 
   // join event 처리
   socket.on('join', function(data) { // room 정보 받음
     if (!roomInfo.hasOwnProperty(data.room)) { // 최초 생성시
       roomInfo[data.room] = [];
     }
-    roomInfo[data.room].push(socket.id);
+    roomInfo[data.room].push(user);
 
     socket.join(data.room);
     global.logger.debug('--------------------');
@@ -71,7 +73,9 @@ io.on('connection', function(socket) {
     global.logger.debug('[fromClient event 발생] ' + '[' + user.name + '] : ' + data.msg + ' 보낸 시간 : ' + data.time);
     global.logger.debug('--------------------\n');
     data.userName = user.name;
+
     io.to(socket.room).emit('fromServer', data); // 자신이 속한 room으로 data 전송
+
     if (data.save === true) { // save 옵션에 따라 DB에 저장 유무 판별
       // mongoDB에 저장
       var savedMessage = new savedMessageModel();
@@ -99,14 +103,15 @@ io.on('connection', function(socket) {
       track_id : data.track_id,
       session_id : data.session_id
     }).
-    skip(data.pageNum - 1).
-    limit(2).
+    skip((data.pageNum - 1) * numOfMessages).
+    limit(numOfMessages).
+    sort({ create_time : -1 }).
     exec(function(err, savedMessage) {
-      if (err) { // TODO : error 처리
+      if (err) { // TODO : error 처리 추가해야함
         global.logger.debug('DB 접근중 오류가 발생하였습니다.');
       }
       global.logger.debug(util.inspect(savedMessage));
-      socket.emit('messageList', {messageList : savedMessage, pageNum : data.pageNum});
+      socket.emit('messageList', {messageList : savedMessage.reverse(), pageNum : data.pageNum});
     });
   });
 
