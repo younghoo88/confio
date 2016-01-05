@@ -4,6 +4,12 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var mongoose = require('mongoose');
+var session = require('../config/session').sessionMiddleware;
+var util = require('util');
+
+io.use(function(socket, next) {
+  session(socket.request, socket.request.res, next);
+});
 server.listen(8080); // 소켓 서버 구동
 
 /**
@@ -18,7 +24,8 @@ var ObjectId = Schema.ObjectId;
 // Message Schema 정의
 var savedMessageSchema = mongoose.Schema({
   id : ObjectId,
-  socket_id : String,
+  name : String,
+  email : String,
   conference_id : Number,
   track_id : Number,
   session_id : Number,
@@ -34,71 +41,92 @@ var savedMessage = new savedMessageModel();
  * 각 세션을 socket.io의 room 기능을 통해 구현하였다.
  */
 // TODO : 컨퍼런스 기간이 끝난 이후에는 해당 room을 들어가지 못하게 구현해야할듯
+// TODO : 하나의 객체에 이 서비스의 모든 방정보를 담기보다는 다른 방법이 필요하다
 var roomInfo = {};
 
 io.on('connection', function(socket) {
+  var session = socket.request.session;
+  var user = session.passport.user; // session store에 저장된 user 객체(name, email, password 정보를 갖고 있다)
+  var numOfMessages = 2; // client에서 message fetching할때마다 보여줄 message 갯수(DEFAULT = 5)
+
   // join event 처리
   socket.on('join', function(data) { // room 정보 받음
     if (!roomInfo.hasOwnProperty(data.room)) { // 최초 생성시
       roomInfo[data.room] = [];
     }
-    roomInfo[data.room].push(socket.id);
+    roomInfo[data.room].push(user);
 
     socket.join(data.room);
     global.logger.debug('--------------------');
     global.logger.debug('room 정보 : ' + data.room);
-    global.logger.debug('이용자 정보 : ' + roomInfo[data.room]);
+    global.logger.debug('이용자 소켓정보 : ' + roomInfo[data.room]);
+    global.logger.debug('이용자 정보 : ' + util.inspect(user));
     global.logger.debug('이용 인원 : ' + roomInfo[data.room].length);
     socket.room = data.room; // 해당 소켓이 room 정보를
-    io.to(socket.room).emit('fromServer', {msg : socket.id + ' 이 방에 입장하였습니다.', time : new Date()});
-    global.logger.debug('--------------------');
+    io.to(socket.room).emit('joinMessage', {user : user, time : new Date()});
+    global.logger.debug('--------------------\n');
   });
 
   // message 처리
   socket.on('fromClient', function(data) {
-    global.logger.debug('received from client message : ' + data.msg + ' at ' + data.time);
+    global.logger.debug('--------------------');
+    global.logger.debug('[fromClient event 발생] ' + '[' + user.name + '] : ' + data.msg + ' 보낸 시간 : ' + data.time);
+    global.logger.debug('--------------------\n');
+    data.userName = user.name;
+
     io.to(socket.room).emit('fromServer', data); // 자신이 속한 room으로 data 전송
 
-    // mongoDB에 저장
-    var savedMessage = new savedMessageModel();
-    savedMessage.socket_id = socket.id;
-    savedMessage.conference_id = data.conference_id;
-    savedMessage.track_id = data.track_id;
-    savedMessage.session_id = data.session_id;
-    savedMessage.message = data.msg;
-    savedMessage.create_time = data.time;
-    savedMessage.save(function(err, next) {
-      if (err) {
-        next();
-        return;
-      }
-      global.logger.debug('saved....');
-    });
+    if (data.save === true) { // save 옵션에 따라 DB에 저장 유무 판별
+      // mongoDB에 저장
+      var savedMessage = new savedMessageModel();
+      savedMessage.name = user.name;
+      savedMessage.email = user.email;
+      savedMessage.conference_id = data.conference_id;
+      savedMessage.track_id = data.track_id;
+      savedMessage.session_id = data.session_id;
+      savedMessage.message = data.msg;
+      savedMessage.create_time = data.time;
+      savedMessage.save(function(err, next) {
+        if (err) {
+          return next();
+        }
+        global.logger.debug('--------------------');
+        global.logger.debug('DB에 메시지 내용을 저장하였습니다.');
+        global.logger.debug('--------------------\n');
+      });
+    }
   });
 
-  // mongodb find 테스트
   socket.on('showMessage', function(data) {
-    savedMessageModel.find(function(err, savedMessage) {
-      if (err) {
-        global.logger.debug('error ocurred!');
+    savedMessageModel.find({
+      conference_id : data.conference_id,
+      track_id : data.track_id,
+      session_id : data.session_id
+    }).
+    skip((data.pageNum - 1) * numOfMessages).
+    limit(numOfMessages).
+    sort({ create_time : -1 }).
+    exec(function(err, savedMessage) {
+      if (err) { // TODO : error 처리 추가해야함
+        global.logger.debug('DB 접근중 오류가 발생하였습니다.');
       }
-      console.log(savedMessage);
+      global.logger.debug(util.inspect(savedMessage));
+      socket.emit('messageList', {messageList : savedMessage.reverse(), pageNum : data.pageNum});
     });
   });
 
   // disconnect event 처리
   socket.on('disconnect', function(data) {
     global.logger.debug('--------------------');
-    global.logger.debug('disconnect event 발생');
+    global.logger.debug('[disconnect event 발생]');
     global.logger.debug('socket.room : ' + socket.room);
-    global.logger.debug('socket.id : ' + socket.id);
     // TODO : undefined 처리
     if (roomInfo[socket.room] !== undefined) {
       var deleteIndex = roomInfo[socket.room].indexOf(socket.id);
       roomInfo[socket.room].splice(deleteIndex, 1);
     }
-    io.to(socket.room).emit('fromServer', {msg : socket.id + '님이 나가셨습니다.', time : new Date()});
-    global.logger.debug('--------------------');
+    io.to(socket.room).emit('fromServer', {msg : user.email + '님이 나가셨습니다.', time : new Date()});
+    global.logger.debug('--------------------\n');
   });
 });
 
@@ -108,7 +136,8 @@ function getSession(req, res, next) {
   var session_id = req.params.session_id;
 
   // 페이지 렌더링
-  res.render('index', {conference_id : conference_id, track_id : track_id, session_id : session_id}); // client event용
+  // client event 처리용이고 angular와 합칠때 제거 예정
+  res.render('index', {conference_id : conference_id, track_id : track_id, session_id : session_id});
 
   // TODO : Database 연동부분 구현
   /*
@@ -149,6 +178,8 @@ function putMessage(req, res, next) {
 }
 
 function getQuestion(req, res, next) {
+  global.logger.debug('req.session.user : ' + util.inspect(req.user)); // session 유지가 되므로 user정보를 읽어올 수 있다.
+
   var result = {
     success : 1,
     result : {

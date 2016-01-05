@@ -7,10 +7,13 @@ module.exports = function(passport) {
 
   passport.serializeUser(function(user, done) {
     global.logger.debug('passport.serializeUser() => user.user_id : ', user.user_id);
-    done(null, user.user_id);
+    done(null, user);
   });
 
-  passport.deserializeUser(function(id, done) {
+  passport.deserializeUser(function(user, done) {
+    global.logger.debug('passport.deserializeUser() => ', util.inspect(user));
+    return done(null, user);
+    /*
     global.connectionPool.getConnection(function(err, connection) {
       if (err) {
         return done(err);
@@ -25,11 +28,15 @@ module.exports = function(passport) {
         user.user_id = rows[0].user_id;
         user.email = rows[0].email;
         user.password = rows[0].password;
+        //user.user_id = 8;
+        //user.email = 'brown@naver.com';
+        //user.password = '1234';
         connection.release();
         global.logger.debug('passport.deserializeUser() => ', util.inspect(user));
         return done(null, user);
       });
     });
+    */
   });
 
   passport.use('local-signup', new LocalStrategy({
@@ -131,7 +138,7 @@ module.exports = function(passport) {
           return done(err);
         }
 
-        var selectQuery = 'SELECT user_id, email, password ' +
+        var selectQuery = 'SELECT user_id, name, email, password ' +
                           'FROM user ' +
                           'WHERE email = ?';
 
@@ -149,6 +156,7 @@ module.exports = function(passport) {
 
           var user = {};
           user.user_id = rows[0].user_id;
+          user.name = rows[0].name;
           user.email = rows[0].email;
           user.password = rows[0].password;
           connection.release();

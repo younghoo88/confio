@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var passport = require('passport');
+var isLoggedIn = require('../lib/common').isLoggedIn;
+var util = require('util');
 
 /**
  * 회원가입
@@ -48,6 +50,8 @@ function authenticateLocalLogin(req, res, next) {
       return next(err);
     }
 
+    global.logger.debug('passport.authenticate() user : ' + user);
+
     if (!user) {
       global.logger.debug("passport.authenticate('local-login') => 로그인실패");
       return next({message : '이메일이 중복되었거나 잘못된 비밀번호입니다.'});
@@ -89,12 +93,7 @@ function login(req, res, next) {
  * @param next
  */
 function logout(req, res, next) {
-  // console.log(req);
-  global.logger.debug('passport isAuthenticated : ' + req.isAuthenticated());
-  console.log('req.session.passport.user : ' + req.session.passport.user);
-  console.log('req.session.passport : ' + req.session.passport);
-  console.log('req.session : ' + req.session);
-  global.logger.debug("logout => " + req.user);
+  global.logger.debug("logout => " + util.inspect(req.user));
   req.logout();
   var result = {
     success : 1,
@@ -129,7 +128,7 @@ function editUser(req, res, next) {
  * @param res
  * @param next
  */
-function checkEmail(req, res, next) {
+function checkEmail(req, res, next) { // TODO : 구현예정
   var email = req.params.email;
   global.logger.debug('req.params로 입력된 email값 : ' + email);
   var result = {
@@ -147,7 +146,7 @@ function checkEmail(req, res, next) {
  * @param res
  * @param next
  */
-function deleteUser(req, res, next) {
+function deleteUser(req, res, next) {// TODO : 구현예정
   var result = {
     success : 1,
     result : {
@@ -163,7 +162,7 @@ function deleteUser(req, res, next) {
  * @param res
  * @param next
  */
-function getMyConferenceList(req, res, next) {
+function getMyConferenceList(req, res, next) {// TODO : 구현예정
   var result = {
     success : 1,
     result : [
@@ -179,10 +178,15 @@ function getMyConferenceList(req, res, next) {
   res.json(result);
 }
 
-router.post('/', join);
-router.post('/login', authenticateLocalLogin, login);
-router.get('/logout', logout);
+function getLoginForm(req, res, next) {
+  global.logger.debug('entering the login form page');
+  res.render('login');
+}
 
+router.post('/', join);
+router.get('/login', getLoginForm);
+router.post('/login', authenticateLocalLogin, login);
+router.get('/logout', isLoggedIn, logout);
 router.put('/change', editUser);
 router.get('/mailCheck/:email', checkEmail);
 router.delete('/delete', deleteUser);

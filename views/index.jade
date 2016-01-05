@@ -7,23 +7,52 @@ html
         socket.emit('join', {room : '/#{conference_id}/#{track_id}/#{session_id}'});
         var btn1 = document.querySelector("#btn1");
         btn1.addEventListener("click", function() {
-          // console.log('send message');
           socket.emit("fromClient", {
             conference_id : #{conference_id},
             track_id : #{track_id},
             session_id : #{session_id},
-            msg: "hello world",
-            time : new Date()
+            msg: "안녕하세요!",
+            time : new Date(),
+            save : true
           });
         });
 
         var btn2 = document.querySelector("#btn2");
         btn2.addEventListener("click", function() {
-          socket.emit("showMessage");
+          socket.emit("fromClient", {
+            conference_id : #{conference_id},
+            track_id : #{track_id},
+            session_id : #{session_id},
+            msg: "안녕하세요!",
+            time: new Date(),
+            save: false
+          });
         });
 
-        socket.on("fromServer", function (data) {
-          console.log('received from server' + data.msg + ' at ' + data.time);
+        var btn3 = document.querySelector("#btn3");
+        var pageNum = 1;
+
+        btn3.addEventListener("click", function() {
+          socket.emit("showMessage", {
+            conference_id: #{conference_id},
+            track_id : #{track_id},
+            session_id : #{session_id},
+            pageNum : pageNum
+          });
+          pageNum++;
+        });
+
+        socket.on("messageList", function(data) {
+          console.log('current page : ' + data.pageNum);
+          console.log(data.messageList);
+        });
+
+        socket.on("fromServer", function(data) {
+          console.log('[' + data.userName + '] ' + data.msg + ' 보낸 시간 : ' + data.time);
+        });
+
+        socket.on("joinMessage", function(data) {
+          console.log(data.user.name + '님이 입장하였습니다.');
         });
       };
 
@@ -31,4 +60,5 @@ html
     div
       .btn_container
         button#btn1 Send to Server
-        button#btn2 Show mongo DB Messages
+        button#btn2 Send to Server Without Save
+        button#btn3 Show mongo DB Messages
