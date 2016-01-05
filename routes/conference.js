@@ -20,12 +20,14 @@ var  async = require('async');
  *            12. getConferenceInfo
  * */
 
+
+
 /**
  * Name : createConference
  * URL : post /conference
  * Description : conference 테이블에 제목, 시작시간, 종료시간, 설명,
  *              주소, 위도, 경도, 컨퍼런스 코드, 컨퍼런스 진행여부 값을 insert
- * Params :  busker_id(버스커 아이디), review_id(review 테이블의 리뷰 아이디)
+ * Params :
  * Session : 필요함
  **/
 function createConference(req, res, next) {
@@ -52,8 +54,8 @@ function createConference(req, res, next) {
      * Query 설명 : conference 정보를 최초 insert하는 query
       *  */
     var insertQuery = 'INSERT INTO conference ' +
-                      '(title, start_time, end_time, description, address, latitude, longitude, code, is_open) ' +
-                      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      '(title, start_time, end_time, description, address, latitude, longitude, code, is_open) ' +
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
     connection.query(insertQuery, valuesToBeInserted, function(err, info) {
       if (err) {
@@ -388,7 +390,7 @@ function getConferenceInfo(req, res, next) {
                   return parallelCallback(err);
                   //TODO: get to clean error stuff
                 }
-                global.logger.debug('session 조건 조회완료!')
+                global.logger.debug('session 조건 조회완료!');
                 global.logger.debug('Result of sessionInfo : ' + rows + rows[0]);
                 parallelCallback(null, rows);
               }); //end of connection query
@@ -480,22 +482,23 @@ function getConferenceInfo(req, res, next) {
     }); // end of async.waterfall
   }); // end of process.nextTick();
 }
-
+//TODO : 이메일 비슷한거 검색
 router.route('/')
   .post(createConference)
   .put(editConference)
-  .delete(deleteConference)
+  .delete(deleteConference);
+
 router.route('/participation')
   .post(createParticipation)
-  .put(editParticipation)
+  .put(editParticipation);
 router.route('/track')
   .post(createTrack)
   .put(editTrack)
-  .delete(deleteTrack)
+  .delete(deleteTrack);
 router.route('/track/session')
   .post(createSession)
   .put(editSession)
-  .delete(deleteSession)
+  .delete(deleteSession);
 router.get('/:conference_id', getConferenceInfo);
 
 module.exports = router;

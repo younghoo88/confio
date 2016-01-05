@@ -93,13 +93,13 @@ module.exports = function(passport) {
                 return done(err);
               }
 
-              var insertQuery = 'INSERT INTO user(name, email, job_sort, job, password) ' +
+              var insertQuery = 'INSERT INTO user(name, email, job_sort_id, job, password) ' +
                                 'VALUES (?, ?, ?, ?, ?)';
 
               var placeHolders = [
                 req.body.name,
                 newUser.email,
-                req.body.job_sort,
+                req.body.job_sort_id,
                 req.body.job,
                 newUser.password
               ];
