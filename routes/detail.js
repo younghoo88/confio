@@ -8,16 +8,16 @@ var session = require('../config/session').sessionMiddleware;
 var util = require('util');
 var async = require('async');
 
-//io.use(function(socket, next) {
-//  session(socket.request, socket.request.res, next);
-//});
-// server.listen(8080); // 소켓 서버 구동
+io.use(function(socket, next) {
+  session(socket.request, socket.request.res, next);
+});
+ server.listen(8080); // 소켓 서버 구동
 
 /**
  * MongoDB 구현부분
  *
  */
-// mongoose.connect('mongodb://localhost/test'); // test db에 접속
+mongoose.connect('mongodb://localhost/test'); // test db에 접속
 
 var Schema = mongoose.Schema;
 var ObjectId = Schema.ObjectId;
@@ -43,93 +43,93 @@ var savedMessage = new savedMessageModel();
  */
 // TODO : 컨퍼런스 기간이 끝난 이후에는 해당 room을 들어가지 못하게 구현해야할듯
 // TODO : 하나의 객체에 이 서비스의 모든 방정보를 담기보다는 다른 방법이 필요하다
-//var roomInfo = {};
-//
-//io.on('connection', function(socket) {
-//  var session = socket.request.session;
-//  var user = session.passport.user; // session store에 저장된 user 객체(name, email, password 정보를 갖고 있다)
-//  var numOfMessages = 2; // client에서 message fetching할때마다 보여줄 message 갯수(DEFAULT = 5)
-//
-//  // join event 처리
-//  socket.on('join', function(data) { // room 정보 받음
-//    if (!roomInfo.hasOwnProperty(data.room)) { // 최초 생성시
-//      roomInfo[data.room] = [];
-//    }
-//    roomInfo[data.room].push(user);
-//
-//    socket.join(data.room);
-//    global.logger.debug('--------------------');
-//    global.logger.debug('room 정보 : ' + data.room);
-//    global.logger.debug('이용자 소켓정보 : ' + roomInfo[data.room]);
-//    global.logger.debug('이용자 정보 : ' + util.inspect(user));
-//    global.logger.debug('이용 인원 : ' + roomInfo[data.room].length);
-//    socket.room = data.room; // 해당 소켓이 room 정보를
-//    io.to(socket.room).emit('joinMessage', {user : user, time : new Date()});
-//    global.logger.debug('--------------------\n');
-//  });
-//
-//  // message 처리
-//  socket.on('fromClient', function(data) {
-//    global.logger.debug('--------------------');
-//    global.logger.debug('[fromClient event 발생] ' + '[' + user.name + '] : ' + data.msg + ' 보낸 시간 : ' + data.time);
-//    global.logger.debug('--------------------\n');
-//    data.userName = user.name;
-//
-//    io.to(socket.room).emit('fromServer', data); // 자신이 속한 room으로 data 전송
-//
-//    if (data.save === true) { // save 옵션에 따라 DB에 저장 유무 판별
-//      // mongoDB에 저장
-//      var savedMessage = new savedMessageModel();
-//      savedMessage.name = user.name;
-//      savedMessage.email = user.email;
-//      savedMessage.conference_id = data.conference_id;
-//      savedMessage.track_id = data.track_id;
-//      savedMessage.session_id = data.session_id;
-//      savedMessage.message = data.msg;
-//      savedMessage.create_time = data.time;
-//      savedMessage.save(function(err, next) {
-//        if (err) {
-//          return next();
-//        }
-//        global.logger.debug('--------------------');
-//        global.logger.debug('DB에 메시지 내용을 저장하였습니다.');
-//        global.logger.debug('--------------------\n');
-//      });
-//    }
-//  });
-//
-//  socket.on('showMessage', function(data) {
-//    savedMessageModel.find({
-//      conference_id : data.conference_id,
-//      track_id : data.track_id,
-//      session_id : data.session_id
-//    }).
-//    skip((data.pageNum - 1) * numOfMessages).
-//    limit(numOfMessages).
-//    sort({ create_time : -1 }).
-//    exec(function(err, savedMessage) {
-//      if (err) { // TODO : error 처리 추가해야함
-//        global.logger.debug('DB 접근중 오류가 발생하였습니다.');
-//      }
-//      global.logger.debug(util.inspect(savedMessage));
-//      socket.emit('messageList', {messageList : savedMessage.reverse(), pageNum : data.pageNum});
-//    });
-//  });
-//
-//  // disconnect event 처리
-//  socket.on('disconnect', function(data) {
-//    global.logger.debug('--------------------');
-//    global.logger.debug('[disconnect event 발생]');
-//    global.logger.debug('socket.room : ' + socket.room);
-//    // TODO : undefined 처리
-//    if (roomInfo[socket.room] !== undefined) {
-//      var deleteIndex = roomInfo[socket.room].indexOf(socket.id);
-//      roomInfo[socket.room].splice(deleteIndex, 1);
-//    }
-//    io.to(socket.room).emit('fromServer', {msg : user.email + '님이 나가셨습니다.', time : new Date()});
-//    global.logger.debug('--------------------\n');
-//  });
-//});
+var roomInfo = {};
+
+io.on('connection', function(socket) {
+  var session = socket.request.session;
+  var user = session.passport.user; // session store에 저장된 user 객체(name, email, password 정보를 갖고 있다)
+  var numOfMessages = 2; // client에서 message fetching할때마다 보여줄 message 갯수(DEFAULT = 5)
+
+  // join event 처리
+  socket.on('join', function(data) { // room 정보 받음
+    if (!roomInfo.hasOwnProperty(data.room)) { // 최초 생성시
+      roomInfo[data.room] = [];
+    }
+    roomInfo[data.room].push(user);
+
+    socket.join(data.room);
+    global.logger.debug('--------------------');
+    global.logger.debug('room 정보 : ' + data.room);
+    global.logger.debug('이용자 소켓정보 : ' + roomInfo[data.room]);
+    global.logger.debug('이용자 정보 : ' + util.inspect(user));
+    global.logger.debug('이용 인원 : ' + roomInfo[data.room].length);
+    socket.room = data.room; // 해당 소켓이 room 정보를
+    io.to(socket.room).emit('joinMessage', {user : user, time : new Date()});
+    global.logger.debug('--------------------\n');
+  });
+
+  // message 처리
+  socket.on('fromClient', function(data) {
+    global.logger.debug('--------------------');
+    global.logger.debug('[fromClient event 발생] ' + '[' + user.name + '] : ' + data.msg + ' 보낸 시간 : ' + data.time);
+    global.logger.debug('--------------------\n');
+    data.userName = user.name;
+
+    io.to(socket.room).emit('fromServer', data); // 자신이 속한 room으로 data 전송
+
+    if (data.save === true) { // save 옵션에 따라 DB에 저장 유무 판별
+      // mongoDB에 저장
+      var savedMessage = new savedMessageModel();
+      savedMessage.name = user.name;
+      savedMessage.email = user.email;
+      savedMessage.conference_id = data.conference_id;
+      savedMessage.track_id = data.track_id;
+      savedMessage.session_id = data.session_id;
+      savedMessage.message = data.msg;
+      savedMessage.create_time = data.time;
+      savedMessage.save(function(err, next) {
+        if (err) {
+          return next();
+        }
+        global.logger.debug('--------------------');
+        global.logger.debug('DB에 메시지 내용을 저장하였습니다.');
+        global.logger.debug('--------------------\n');
+      });
+    }
+  });
+
+  socket.on('showMessage', function(data) {
+    savedMessageModel.find({
+      conference_id : data.conference_id,
+      track_id : data.track_id,
+      session_id : data.session_id
+    }).
+    skip((data.pageNum - 1) * numOfMessages).
+    limit(numOfMessages).
+    sort({ create_time : -1 }).
+    exec(function(err, savedMessage) {
+      if (err) { // TODO : error 처리 추가해야함
+        global.logger.debug('DB 접근중 오류가 발생하였습니다.');
+      }
+      global.logger.debug(util.inspect(savedMessage));
+      socket.emit('messageList', {messageList : savedMessage.reverse(), pageNum : data.pageNum});
+    });
+  });
+
+  // disconnect event 처리
+  socket.on('disconnect', function(data) {
+    global.logger.debug('--------------------');
+    global.logger.debug('[disconnect event 발생]');
+    global.logger.debug('socket.room : ' + socket.room);
+    // TODO : undefined 처리
+    if (roomInfo[socket.room] !== undefined) {
+      var deleteIndex = roomInfo[socket.room].indexOf(socket.id);
+      roomInfo[socket.room].splice(deleteIndex, 1);
+    }
+    io.to(socket.room).emit('fromServer', {msg : user.email + '님이 나가셨습니다.', time : new Date()});
+    global.logger.debug('--------------------\n');
+  });
+});
 /** NOT COMPLETE & NEED TO CODE NEITHER **/
 function getSession(req, res, next) {
   var conference_id = req.params.conference_id;
@@ -138,40 +138,47 @@ function getSession(req, res, next) {
 
   // 페이지 렌더링
   // client event 처리용이고 angular와 합칠때 제거 예정
-  res.render('index', {conference_id : conference_id, track_id : track_id, session_id : session_id});
+  // res.render('index', {conference_id : conference_id, track_id : track_id, session_id : session_id});
 
-  // TODO : Database 연동부분 구현
-  /*
-  var result = {
-    success : 1,
-    result : {
-      conference : {
-        id : 1,
-        title : 'NaverD2FEST',
-        start_time : '2016-01-06 08:00',
-        end_time : '2016-01-06 18:00',
-        track : [
-          {
-            id : 1,
-            order : 1,
-            title : '웹프로그래밍',
-            place : 'A홀',
-            session : [
-              {
-                id : 1,
-                title : 'Facebook React.js',
-                start_time : '2015-01-06 10:00',
-                end_time : '2015-01-06 12:00'
-              }
-            ]
-          }
-        ]
-      }
+  global.connectionPool.getConnection(function(err, connection) {
+
+    if (err) {
+      global.logger.debug(err);
+      connection.release();
+      return next(err);
     }
-  };
-  res.json(result);
-  */
+
+    var selectQuery = 'SELECT c.conference_id, c.title, c.description, c.address, c.code, ' +
+                      't.track_id, t.title track_title, t.place, t.sequnece, ' +
+                      's.session_id, s.title session_title, s.description, s.presentation_url, ' +
+                      's.start_time, s.end_time ' +
+                      'FROM conference c ' +
+                      'JOIN track t ' +
+                      'ON c.conference_id = t.conference_id ' +
+                      'JOIN session s ' +
+                      'ON t.track_id = s.track_id ' +
+                      'WHERE session_id = ?';
+
+    connection.query(selectQuery, [session_id], function(err, rows, fields) {
+
+      if (err) {
+        global.logger.debug(err);
+        connection.release();
+        return next(err);
+      }
+
+      res.status(200).json({
+        success : 1,
+        result : rows[0]
+      });
+
+      global.logger.debug('세션 정보 조회 완료');
+      connection.release();
+
+    });
+  });
 }
+
 /**DONE**/
 function getSessionQuestion(req, res, next) {
   global.connectionPool.getConnection(function(err, connection) {
@@ -220,11 +227,7 @@ function getSessionQuestion(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 }
-/** WILL BE DELETED **/
-function putMessage(req, res, next) {
-  // TODO : 삭제 예정(Socket.io를 이용해 메시지를 주고받기 때문에 putMessage가 필요없어졌다.)
-  res.json({});
-}
+
 /**DONE**/
 function getQuestion(req, res, next) { //상세페이지
   process.nextTick(function() {
@@ -308,29 +311,8 @@ function getQuestion(req, res, next) { //상세페이지
       res.json(result);
     }); // end of async.waterfall
   }); // end of process.nextTick
-
-  /*
-   {
-   global.logger.debug('req.session.user : ' + util.inspect(req.user)); // session 유지가 되므로 user정보를 읽어올 수 있다.
-   var result = {
-   success : 1,
-   result : {
-   question_id : 1,
-   content : 'React.js에 대적할 다른 기술은 무엇이 있을까요?',
-   like_count : 50,
-   answer : [
-   {
-   answer_id : 3,
-   content : 'angular.js 정도가 있는것 같네요.',
-   like_count : 10
-   }
-   ]
-   }
-   };
-   res.json(result);
-   }
-   */
 }
+
 /**DONE**/
 function addQuestion(req, res, next) {
 
@@ -343,7 +325,7 @@ function addQuestion(req, res, next) {
     }
 
     var insertQuestion = "INSERT INTO question(session_id, user_id, content, create_time, like_count, is_valid) " +
-                        "VALUES (?, ?, ?, now(), 0, 1)";
+                         "VALUES (?, ?, ?, now(), 0, 1)";
 
     connection.query(insertQuestion, [req.params.session_id, req.user.user_id, req.body.content], function(err, rows, info) {
       if (err) {
@@ -364,6 +346,7 @@ function addQuestion(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 }
+
 /** NOT COMPLETE & NEED TO CODE NEITHER **/
 function editQuestion(req, res, next) {
   var userId = req.body.user_id;
@@ -377,6 +360,7 @@ function editQuestion(req, res, next) {
   };
   res.json(result);
 }
+
 /** NOT COMPLETE & NEED TO CODE NEITHER **/
 function deleteQuestion(req, res, next) {
   var userId = req.body.user_id;
@@ -389,6 +373,7 @@ function deleteQuestion(req, res, next) {
   };
   res.json(result);
 }
+
 /**DONE**/
 function addAnswer(req, res, next) {
   ///:conference_id/:track_id/:session_id/question/answer'
@@ -420,11 +405,13 @@ function addAnswer(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 }
+
 /** NOT COMPLETE & NEED TO CODE NEITHER **/
 function deleteAnswer(req, res, next) {
   var userId = req.body.user_id;
   var answerId = req.body.answer_id;
 }
+
 /**DONE**/
 function addQuestionLike(req, res, next) {
 
@@ -490,6 +477,7 @@ function addQuestionLike(req, res, next) {
     }); // end of process.nextTick();
   });
 }
+
 /**DONE**/
 function addAnswerLike(req, res, next) {
 
@@ -557,7 +545,6 @@ function addAnswerLike(req, res, next) {
 }
 
 router.get('/:conference_id/:track_id/:session_id', getSession);
-// router.post('/:conference_id/:track_id/:session_id/chat', putMessage);
 router.get('/:conference_id/:track_id/:session_id/info', getSessionQuestion);
 router.get('/:conference_id/:track_id/:session_id/question/:question_id', getQuestion);
 router.route('/:conference_id/:track_id/:session_id/question')
