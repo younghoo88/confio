@@ -130,7 +130,7 @@ var savedMessage = new savedMessageModel();
 //    global.logger.debug('--------------------\n');
 //  });
 //});
-/* NOT COMPLETE YET**/
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function getSession(req, res, next) {
   var conference_id = req.params.conference_id;
   var track_id = req.params.track_id;
@@ -172,33 +172,166 @@ function getSession(req, res, next) {
   res.json(result);
   */
 }
+/**DONE**/
+function getSessionQuestion(req, res, next) {
+  global.connectionPool.getConnection(function(err, connection) {
+    global.logger.debug('here i am ');
 
+    if (err) {
+      global.logger.error(err);
+      connection.release();
+      next(err);
+      return;
+    }
+
+    var select = 'SELECT question_id, user_id, content, like_count ' +
+                'FROM question ' +
+                'WHERE session_id = ? and is_valid =1 ' +
+                'ORDER BY like_count desc';
+    var placeHolders =[req.params.session_id];
+    global.logger.debug('req.params.session_id ' + req.params.session_id);
+    connection.query(select, placeHolders, function(err, rows, info) {
+      if (err) {
+        global.logger.error(err);
+        connection.release();
+        next(err);
+        return;
+      }
+
+      var result = {
+        success : 1,
+        questionList : []
+      };
+
+      async.each(rows, function(row, cb) {
+       result.questionList.push(row);
+        cb();
+     }, function(err) {
+      if(err) {
+        global.logger.error('에러발생');
+        connection.release();
+        return next(err);
+      }
+       global.logger.debug('sucessful done!!!!!');
+
+       res.json(result);
+       connection.release();
+     });
+    }); //end of connection
+  }); // end of global.connectionPool
+}
+/** WILL BE DELETED **/
 function putMessage(req, res, next) {
   // TODO : 삭제 예정(Socket.io를 이용해 메시지를 주고받기 때문에 putMessage가 필요없어졌다.)
   res.json({});
 }
+/**DONE**/
+function getQuestion(req, res, next) { //상세페이지
+  process.nextTick(function() {
+    async.waterfall([
+      function(callback) { //question 갖고오기
+        global.connectionPool.getConnection(function(err, connection) {
+          if (err) {
+            // 에러처리
+            err.message = '요청 에러';
+            connection.release();
+            callback(err);
+          }
+          var query = "SELECT question_id, session_id, user_id, content, create_time, like_count " +
+                      "FROM question " +
+                      "WHERE session_id = ? and is_valid = 1"; // question_id를 session_id로 수정함.
+          var placeHolders = [req.params.session_id];
 
-function getQuestion(req, res, next) {
-  global.logger.debug('req.session.user : ' + util.inspect(req.user)); // session 유지가 되므로 user정보를 읽어올 수 있다.
+          connection.query(query, placeHolders, function(err, row, fields) {
+            if (err) {
+              // 에러처리
+              connection.release();
+              err.message='question 조회 중 에러 ';
 
-  var result = {
-    success : 1,
-    result : {
-      question_id : 1,
-      content : 'React.js에 대적할 다른 기술은 무엇이 있을까요?',
-      like_count : 50,
-      answer : [
-        {
-          answer_id : 3,
-          content : 'angular.js 정도가 있는것 같네요.',
-          like_count : 10
-        }
-      ]
-    }
-  };
-  res.json(result);
+              // 로그찍고
+              // 콜백을 하든 넥스트를 하든
+            }
+
+            global.logger.debug('question 조회 완료!');
+            callback(null, row);
+          }); // end of connection.query
+        }); // end of  global.connectionPool.getConnection
+      },
+      function(questionList, callback) { //answer
+        global.connectionPool.getConnection(function(err, connection) {
+          if (err) {
+            // 에러처리
+            err.message = '요청 에러';
+            connection.release();
+            callback(err);
+          }
+          var query = "SELECT answer_id, question_id, user_id, content answer_content, like_count " +
+                      "FROM answer " +
+                      "WHERE is_valid = 1 and question_id = ? " +
+                      "ORDER BY like_count desc";
+          var placeHolders = [req.params.question_id];
+
+          connection.query(query, placeHolders, function(err, rows, fields) {
+            if (err) {
+              // 에러처리
+              connection.release();
+              err.message=' 조회 중 에러 ';
+
+              // 로그찍고
+              // 콜백을 하든 넥스트를 하든
+            }
+
+            global.logger.debug(' 조회 완료!');
+            callback(null, questionList, rows);
+          }); // end of connection.query
+        }); // end of  global.connectionPool.getConnection
+      },
+      function(questionList, answerList, callback) {
+        var result = {
+          question: questionList,
+          answerList: []
+        }; //need to process
+
+        async.each(answerList, function(row, cb) {
+          result.answerList.push(row);
+          cb();
+        });
+        callback(null, result);
+      }
+    ], function(err, result) {
+      if (err) {
+        global.logger.debug('waterfall 에러발생');
+        global.logger.error(err);
+        err.message = '조회 중 오류 발생';
+        return next(err);
+      } //if
+      res.json(result);
+    }); // end of async.waterfall
+  }); // end of process.nextTick
+
+  /*
+   {
+   global.logger.debug('req.session.user : ' + util.inspect(req.user)); // session 유지가 되므로 user정보를 읽어올 수 있다.
+   var result = {
+   success : 1,
+   result : {
+   question_id : 1,
+   content : 'React.js에 대적할 다른 기술은 무엇이 있을까요?',
+   like_count : 50,
+   answer : [
+   {
+   answer_id : 3,
+   content : 'angular.js 정도가 있는것 같네요.',
+   like_count : 10
+   }
+   ]
+   }
+   };
+   res.json(result);
+   }
+   */
 }
-
+/**DONE**/
 function addQuestion(req, res, next) {
 
   global.connectionPool.getConnection(function(err, connection) {
@@ -231,22 +364,7 @@ function addQuestion(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 }
-
-
-/*
-  var userId = req.body.user_id;
-  var content = req.body.content;
-  var result = {
-    success : 1,
-    result : {
-      message : '질문이 등록되었습니다.'
-    }
-  };
-  res.json(result);
-*/
-
-
-
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function editQuestion(req, res, next) {
   var userId = req.body.user_id;
   var questionId = req.body.question_id;
@@ -259,7 +377,7 @@ function editQuestion(req, res, next) {
   };
   res.json(result);
 }
-
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function deleteQuestion(req, res, next) {
   var userId = req.body.user_id;
   var questionId = req.body.question_id;
@@ -271,7 +389,7 @@ function deleteQuestion(req, res, next) {
   };
   res.json(result);
 }
-
+/**DONE**/
 function addAnswer(req, res, next) {
   ///:conference_id/:track_id/:session_id/question/answer'
   global.connectionPool.getConnection(function(err, connection) {
@@ -291,7 +409,6 @@ function addAnswer(req, res, next) {
         next(err);
         return;
       }
-      global.logger.debug('요기');
       var result = {
         success : 1,
         result : {
@@ -303,12 +420,12 @@ function addAnswer(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 }
-
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function deleteAnswer(req, res, next) {
   var userId = req.body.user_id;
   var answerId = req.body.answer_id;
 }
-//TODO HERE3
+/**DONE**/
 function addQuestionLike(req, res, next) {
 
   process.nextTick(function () {
@@ -343,7 +460,6 @@ function addQuestionLike(req, res, next) {
               callback(null);
             }); // end of connection.query
           }, function(callback) {
-            global.logger.debug('commit error???');
             connection.commit(function (err) {
               if (err) {
                 global.logger.debug('commit error');
@@ -374,24 +490,75 @@ function addQuestionLike(req, res, next) {
     }); // end of process.nextTick();
   });
 }
-
-
-
-//TODO HERE4
+/**DONE**/
 function addAnswerLike(req, res, next) {
-  var userId = req.body.user_id;
-  var answerId = req.body.answer_id;
-  var result = {
-    success : 1,
-    result : {
-      message : '질문 답변에 대해 좋아요를 하였습니다.'
-    }
-  };
-  res.json(result);
+
+  process.nextTick(function () {
+    global.connectionPool.getConnection(function (err, connection) {
+      connection.beginTransaction(function (err) {
+        if (err) {
+          err.message = '연결이 원활하지 않습니다. 다시 시도해주시기 바랍니다.';
+          return next(err);
+        }
+
+        async.series([
+          function(callback) {
+            var query = "INSERT INTO answer_like (user_id, answer_id, create_time) VALUES (?, ?, now());";
+            global.logger.debug('req.body.question ' + req.body.answer_id);
+            global.logger.debug('req.body.user_id ' + req.user.user_id);
+
+            connection.query(query, [req.user.user_id, req.body.answer_id], function (err, info) {
+              if (err) {
+                return callback(err);
+              }
+              callback(null);
+            }); // end of connection.query
+          },
+          function(callback) {
+            var query = "UPDATE answer SET like_count = like_count + 1 WHERE answer_id = ? and is_valid = 1";
+            global.logger.debug('callback 2 :   ' + req.user.user_id);
+            connection.query(query, [req.body.answer_id], function (err, result) {
+              if (err) {
+                return callback(err);
+              }
+              global.logger.debug('end of callback2   ');
+              callback(null);
+            }); // end of connection.query
+          }, function(callback) {
+            connection.commit(function (err) {
+              if (err) {
+                return callback(err);
+              }
+              global.logger.debug('call back 3 ');
+            }); // end of connection.commit();
+            global.logger.debug('commit!!!!!!!!!');
+            callback(null);
+          }
+        ], function(err, result) {
+          if (err) {
+            connection.rollback(function () {
+              connection.release();
+              err.message = '답글 좋아요에 에러가 발생했습니다.';
+              return next(err);
+            }); // end of connection.rollback();
+          }
+          connection.release();
+          res.status(200);
+          res.json({
+            "success": 1,
+            "result": {
+              "message": "답글 좋아요가 정상적으로 등록되었습니다."
+            }
+          }); // end of res.json();
+        }); // end of async.waterfall();
+      }); //end of global.pool.getConnection();
+    }); // end of process.nextTick();
+  });
 }
 
 router.get('/:conference_id/:track_id/:session_id', getSession);
 // router.post('/:conference_id/:track_id/:session_id/chat', putMessage);
+router.get('/:conference_id/:track_id/:session_id/info', getSessionQuestion);
 router.get('/:conference_id/:track_id/:session_id/question/:question_id', getQuestion);
 router.route('/:conference_id/:track_id/:session_id/question')
   .post(addQuestion)

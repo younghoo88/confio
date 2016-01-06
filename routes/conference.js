@@ -20,8 +20,6 @@ var  async = require('async');
  *            12. getConferenceInfo
  * */
 
-
-
 /**
  * Name : createConference
  * URL : post /conference
@@ -79,7 +77,7 @@ function createConference(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 } // end of createConference
-/* DOESN'T COMPLETE YET */
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function editConference(req, res, next) {
   var result = {
     success : 1,
@@ -89,7 +87,7 @@ function editConference(req, res, next) {
   };
   res.json(result);
 }
-/* DOESN'T COMPLETE YET */
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function deleteConference(req, res, next) {
   var result = {
     success : 1,
@@ -144,7 +142,7 @@ function createParticipation(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 } // end of addParticipation
-/* DOESN'T COMPLETE YET */
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function editParticipation(req, res, next) {
   var result = {
     success : 1,
@@ -154,6 +152,54 @@ function editParticipation(req, res, next) {
   };
   res.json(result);
 }
+/**DONE **/
+function searchEmail(req, res, next) {  //이메일 ~로 시작하는 LIST 5개씩 보냄
+  global.connectionPool.getConnection(function(err, connection) {
+    global.logger.debug('HERE I AM FROM searchEmail');
+    if (err) {
+      global.logger.error(err);
+      connection.release();
+      next(err);
+      return;
+    }
+
+    var headQuery = 'SELECT email ' +
+                      'FROM user ' + //
+                       'WHERE email like \'';
+    var selectQuery = headQuery + req.params.emailLetter + '%\' ' +'limit 5';//
+
+    connection.query(selectQuery, [], function(err, rows, info) {
+      if (err) {
+        global.logger.error(err);
+        connection.release();
+        next(err);
+        return;
+      }
+    // 결과값을 담을 Result
+    var result = {
+      success : 1,
+      emailList : []
+    };
+     async.each(rows, function(row, cb) {
+       result.emailList.push(row);
+       cb();
+     }, function(err){
+       if(err){
+         global.logger.error('에러발생');
+         connection.release();
+         return next(err);
+       }
+       res.json(result);
+       connection.release();
+
+     }); //end of async
+
+
+    }); //end of connection
+  }); // end of global.connectionPool
+}
+
+
 /**
 * Name : createTrack
 * URL :
@@ -196,7 +242,7 @@ function createTrack(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 }
-/* DOESN'T COMPLETE YET */
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function editTrack(req, res, next) {
   var result = {
     success : 1,
@@ -206,7 +252,7 @@ function editTrack(req, res, next) {
   };
   res.json(result);
 }
-/* DOESN'T COMPLETE YET */
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function deleteTrack(req, res, next) {
   var result = {
     success : 1,
@@ -268,7 +314,7 @@ function createSession(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 }
-/* DOESN'T COMPLETE YET */
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function editSession(req, res, next) {
   var result = {
     success : 1,
@@ -278,7 +324,7 @@ function editSession(req, res, next) {
   };
   res.json(result);
 }
-/* DOESN'T COMPLETE YET */
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function deleteSession(req, res, next) {
   var result = {
     success : 1,
@@ -482,15 +528,16 @@ function getConferenceInfo(req, res, next) {
     }); // end of async.waterfall
   }); // end of process.nextTick();
 }
-//TODO : 이메일 비슷한거 검색
+
 router.route('/')
   .post(createConference)
   .put(editConference)
   .delete(deleteConference);
 
-router.route('/participation')
+router.route('/participation/:emailLetter')
   .post(createParticipation)
-  .put(editParticipation);
+  .put(editParticipation)
+  .get(searchEmail);
 router.route('/track')
   .post(createTrack)
   .put(editTrack)

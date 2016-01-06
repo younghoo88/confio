@@ -111,6 +111,7 @@ function logout(req, res, next) {
  * @param res
  * @param next
  */
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function editUser(req, res, next) {
 
 
@@ -167,6 +168,7 @@ function checkEmail(req, res, next) {
  * @param res
  * @param next
  */
+/** NOT COMPLETE & NEED TO CODE NEITHER **/
 function deleteUser(req, res, next) {// TODO : 구현예정
   var result = {
     success : 1,
