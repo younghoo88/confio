@@ -1,0 +1,127 @@
+
+.session-info {
+  margin: 0 auto;
+  padding: 70px 0;
+  width: 80%;
+}
+
+
+/* PPT */
+
+.session-ppt-section {
+  padding: 20px 0;
+  width: 100%;
+
+
+  .slide-img-container {
+    height: 340px;
+    width: 100%;
+  }
+
+  .slide-img {
+    height: 100%;
+    width: 100%;
+  }
+
+  .slide-control {
+    background-color: black;
+    color: white;
+    position: relative;
+    height: 50px;
+    text-align: center;
+  }
+
+  .slide-nav {
+    display: inline-block;
+    height: 100%;
+  }
+
+  .slide-nav:before {
+    content: "";
+    display: inline-block;
+    vertical-align: middle;
+    height: 100%;
+  }
+
+  .slide-full {
+    height: 100%;
+    position: absolute;
+    top: 0;
+    right: 5px;
+  }
+
+  .slide-full:before {
+    content: "";
+    display: inline-block;
+    vertical-align: middle;
+    height: 100%;
+  }
+}
+
+/* 세션 정보 */
+
+.session-info-section {
+
+  .session-info-title {
+    font-size: 22px;
+  }
+
+  .session-info-time {
+    font-size: 15px;
+    margin-left: 10px;
+  }
+
+  .session-info-speaker {
+    img {
+      height: 40px;
+      width: 40px;
+    }
+
+    .speaker-job {
+      margin-left: 10px;
+      color: #8c8c8c;
+    }
+
+    .speaker-name {
+      margin-left: 10px;
+      font-size: 18px;
+    }
+  }
+}
+
+
+
+/* 채팅창 */
+.session-chat-section {
+  background-color: white;
+  width: 80%;
+
+  .session-chat {
+    padding: 20px 0;
+  }
+
+  .chat-content-container {
+    border: 1px solid black;
+    height: 500px;
+  }
+
+  .chat-input-container {
+    border-color: black;
+    border-style: solid;
+    border-width: 0 1px 1px 1px;
+    height: 70px;
+  }
+
+  .chat-input {
+    float: left;
+    height: 100%;
+    padding: 10px;
+    width: 70%;
+  }
+
+  .chat-send-btn {
+    float: left;
+    width: 30%;
+    height: 100%;
+  }
+}

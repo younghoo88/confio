@@ -1,0 +1,85 @@
+
+<div class="session-info row">
+
+  <!-- 왼쪽 섹션 -->
+  <div class="session-left-section col-xs-7">
+
+    <!-- 세션 PPT -->
+    <div class="session-ppt-section">
+
+      <div class="session-ppt">
+
+        <!-- 슬라이드 -->
+        <div class="slide-img-container">
+          <img src="../assets/img/main3.jpg" class="slide-img">
+        </div>
+
+        <!-- 슬라이드 컨트롤 -->
+        <div class="slide-control">
+
+          <!-- 슬라이드 네비게이션 -->
+          <div class="slide-nav">
+            <button><span class="glyphicon glyphicon-triangle-left" aria-hidden="true"></span></button>
+            <span>1 page of 23</span>
+            <button><span class="glyphicon glyphicon-triangle-right" aria-hidden="true"></span></button>
+          </div>
+
+          <!-- 슬라이드 전체화면 -->
+          <div class="slide-full">
+            <button><span class="glyphicon glyphicon glyphicon-resize-full" aria-hidden="true"></span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- -->
+    <div class="session-info-section">
+      <p>
+
+      </p>
+      <p class="session-info-title-time">
+        <span class="session-info-title">{{vm.sessionInfo.title}}</span>
+        <span class="session-info-time">{{vm.sessionInfo.start_time}} ~ {{vm.sessionInfo.end_time}}</span>
+      </p>
+      <p class="session-info-description">
+        {{vm.sessionInfo.description}}
+      </p>
+      <p class="session-info-speaker">
+        <img src="../assets/img/user-pic.png" class="speaker-picture">
+        <span class="speaker-job">{{vm.sessionInfo.speaker.job}}</span>
+        <span class="speaker-name">{{vm.sessionInfo.speaker.name}}</span>
+      </p>
+    </div>
+
+  </div>
+
+  <!-- 오른쪽 섹션 -->
+  <div class="session-right-section col-xs-5">
+
+    <!-- 채팅창 컨테이너 -->
+    <div class="session-chat-section">
+
+      <!-- 채팅창 -->
+      <div class="session-chat">
+
+        <!-- 채팅창 내용 -->
+        <div class="chat-content-container">
+        </div>
+
+        <!-- 채팅창  -->
+        <div class="chat-input-container">
+          <textarea class="chat-input"></textarea>
+          <button class="chat-send-btn">Send</button>
+        </div>
+
+      </div>
+
+
+    </div>
+  </div>
+
+
+
+
+
+</div>
