@@ -1,0 +1,39 @@
+<div class="modal fade" id="add-admin-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="register-modal">
+        <h4 class="register-modal-title">운영진 추가</h4>
+        <div class="user-sign-inputs">
+          <form name="user-sign-form" ng-submit="vm.addAdmin(vm.currentAddAdmin)">
+
+            <div class="form-group">
+              <label for="adding-admin-email">이메일</label>
+              <input email-finder type="email" id="adding-admin-email" autocomplete="off"
+                     ng-model="vm.currentAddAdmin.email">
+            </div>
+
+            <h5>운영진 타입</h5>
+            <div class="dropdown select-admin-type">
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+                      aria-haspopup="true" aria-expanded="false">
+                {{vm.currentAddAdmin.participation_type ? vm.currentAddAdmin.participation_type : '타입선택'}}
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li><button type="button" ng-click="vm.currentAddAdmin.participation_type = '운영진'">운영진</button></li>
+                <li role="separator" class="divider"></li>
+                <li><button type="button" ng-click="vm.currentAddAdmin.participation_type = '발표자'">발표자</button></li>
+              </ul>
+            </div>
+
+            <button type="submit" class="btn btn-success">운영진 추가</button>
+          </form>
+        </div>
+      </div>
+
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+

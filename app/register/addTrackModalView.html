@@ -1,0 +1,27 @@
+<div class="modal fade" id="add-track-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="user-sign">
+        <h4 class="user-sign-title">트랙 추가</h4>
+        <div class="user-sign-inputs">
+          <form name="user-sign-form" ng-submit="vm.addTrack(vm.currentAddTrack)">
+
+            <div class="form-group">
+              <label for="adding-session-title">주제</label>
+              <input type="text" id="adding-session-title" ng-model="vm.currentAddTrack.title">
+            </div>
+
+            <div class="form-group">
+              <label for="adding-session-place">장소</label>
+              <input type="text" id="adding-session-place" ng-model="vm.currentAddTrack.place">
+            </div>
+
+            <button type="submit" class="btn btn-success">트랙 추가</button>
+          </form>
+        </div>
+      </div>
+
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+

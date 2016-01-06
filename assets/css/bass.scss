@@ -1,0 +1,61 @@
+@import 'bootstrap-override';
+@import 'nav';
+@import 'main';
+@import 'register';
+@import 'conference';
+@import 'session';
+@import 'authenticate';
+
+$input-background-color: #f5f5f5;
+
+
+// =============
+// html, body
+// =============
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  width: 100%;
+}
+
+.route-view {
+  height: 100%;
+  width: 100%;
+}
+
+.center-content {
+  width: 60%;
+  margin: 70px auto 0;
+}
+
+button {
+  background: none;
+  border: none;
+}
+
+button:focus {
+  outline: none;
+}
+
+input[type="text"],
+input[type="email"],
+textarea {
+  background-color: $input-background-color;
+  border: none;
+  display: block;
+  font-size: 14px;
+  height: 40px;
+  padding: 6px 12px;
+  resize: none;
+  width: 100%;
+}
+
+
+input:focus,
+textarea:focus {
+  outline: none;
+}

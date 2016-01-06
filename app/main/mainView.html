@@ -1,0 +1,14 @@
+<div class="main-container">
+	<div class="main-content">
+		<p class="main-copyright">
+			컨퍼런스가 즐거워진다!
+		</p>
+		<form name="conf-code-form" ng-submit="vm.goConference()">
+			<div class="form-group">
+				<label for="conf-code-input">컨퍼런스 코드</label>
+				<input type="text" id="conf-code-input" placeholder="참여코드 입력"
+				       ng-model="vm.conferenceCode" maxlength="6"><br>
+			</div>
+		</form>
+	</div>
+</div>

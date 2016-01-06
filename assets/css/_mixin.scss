@@ -1,0 +1,21 @@
+// ==========
+// 정렬
+// ==========
+@mixin vertical-center($minus-top-percent:0%) {
+  position: relative;
+  top: 50% - $minus-top-percent;
+  transform: translateY(-50%);
+}
+
+@mixin label-disappear() {
+  label {
+    position: fixed;
+    left: -9999px;
+  }
+}
+
+@mixin list-style-none() {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}

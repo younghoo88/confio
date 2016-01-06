@@ -1,0 +1,66 @@
+<div class="modal fade" id="add-session-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="register-modal">
+        <h4 class="register-modal-title">세션 추가</h4>
+        <div class="user-sign-inputs">
+          <form name="user-sign-form" ng-submit="vm.addSession(vm.currentAddSession)">
+
+            <!-- 타이틀 -->
+            <div class="form-group">
+              <label for="adding-session-title">타이틀</label>
+              <input type="text" id="adding-session-title" ng-model="vm.currentAddSession.title">
+            </div>
+
+            <!-- 설명 -->
+            <div class="form-group">
+              <label for="adding-session-description">설명</label>
+			        <textarea id="adding-session-description"
+                ng-model="vm.currentAddSession.description"></textarea>
+            </div>
+
+
+            <!--시작 시간 -->
+            <div class="form-group">
+              <label for="adding-session-start-time">시작 시간</label>
+              <div class="input-group date"
+                   date-time-picker
+                   date-time-picker-options="{{vm.options}}"
+                   on-date-hide-function="vm.isEndLaterThanStart()"
+                   ng-model="vm.registerInfo.confInfo.end_time">
+                <span class="input-group-addon">
+                  <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+                <input type="text" id="adding-session-start-time">
+              </div>
+            </div>
+
+            <!--종료 시간 -->
+            <div class="form-group">
+              <label for="adding-session-end-time">종료 시간</label>
+              <div class="input-group date"
+                   date-time-picker
+                   date-time-picker-options="{{vm.options}}"
+                   on-date-hide-function="vm.isEndLaterThanStart()"
+                   ng-model="vm.registerInfo.confInfo.end_time">
+                <span class="input-group-addon">
+                  <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+                <input type="text" id="adding-session-end-time">
+              </div>
+            </div>
+
+            <!-- PPT 파일 업로드 -->
+            <div class="form-group">
+              <label for="input-session-ppt-file">PPT 파일</label>
+              <input type="file" class="form-control" id="input-session-ppt-file">
+            </div>
+
+            <button type="submit" class="btn btn-success">세션 추가</button>
+          </form>
+        </div>
+      </div>
+
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

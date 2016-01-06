@@ -1,0 +1,41 @@
+
+<div class="conference-info">
+	<!-- 컨퍼런스 정보 -->
+	<div class="conference-default-info">
+		<h3><span>Conference</span></h3>
+		<p class="conference-name">{{vm.conferenceInfo.confInfo.name}}</p>
+		<p class="conference-description">{{vm.conferenceInfo.confInfo.description}}</p>
+		<p class="conference-address">{{vm.conferenceInfo.confInfo.address}}</p>
+		<p class="conference-date">
+			<span class="conference-start-date">{{vm.conferenceInfo.confInfo.start_time}}</span>
+			-
+			<span class="conference-end-date">{{vm.conferenceInfo.confInfo.end_time}}</span>
+		</p>
+
+	</div>
+
+	<!-- 세션 카테고리 -->
+	<div class="conference-session-category">
+		<h3 class="session-category-title">Category</h3>
+		<div class="session-category checkbox">
+			<label ng-repeat="sessionCategory in vm.conferenceInfo.sessionCategory">
+				<input type="checkbox"> {{sessionCategory}}
+			</label>
+		</div>
+	</div>
+
+	<!-- 세션 정보 -->
+	<div class="div conference-session-info">
+		<div class="day-session">
+			<h3 class="day-title">Day 1</h3>
+			<ul class="session-list">
+				<li ng-repeat="session in vm.conferenceInfo.tracks[0].sessions">
+					<a ui-sref="session({ conference_id: 123, session_id: 1 })" class="session-link">
+						<span>{{session.start_time}} ~ {{session.end_time}}</span>
+						<span>{{session.title}}</span>
+					</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,222 @@
+
+
+<div class="register center-content">
+	<!-- 단계를 나타내는 곳 -->
+	<ul class="step-list row">
+		<li class="step-list-1 col-xs-4" ng-class="vm.step.currentStep === 1 ? 'current-step' : ''">
+			<span class="step-number">Step 1</span><br>
+			<span class="step-title">컨퍼런스 정보입력</span>
+		</li>
+		<li class="step-list-2 col-xs-4" ng-class="vm.step.currentStep === 2 ? 'current-step' : ''">
+			<span class="step-number">Step 2</span><br>
+			<span class="step-title">운영진 & 발표자 정보입력</span>
+		</li>
+		<li class="step-list-3 col-xs-4" ng-class="vm.step.currentStep === 3 ? 'current-step' : ''">
+			<span class="step-number">Step 3</span><br>
+			<span class="step-title">트랙 & 세션 정보입력</span>
+		</li>
+	</ul>
+
+	<!-- Step1: 컨퍼런스 정보입력 -->
+	<div class="step-1" ng-if="vm.step.currentStep === 1">
+		<!-- 컨퍼런스 이름 -->
+		<div class="form-group">
+			<label for="input-conf-title">컨퍼런스 이름</label>
+			<input type="text" id="input-conf-title"
+			       ng-model="vm.registerInfo.confInfo.name">
+		</div>
+
+		<!-- 컨퍼런스 설명 -->
+		<div class="form-group">
+			<label for="input-conf-description">컨퍼런스 설명</label>
+			<textarea id="input-conf-description"
+			          ng-model="vm.registerInfo.confInfo.description"></textarea>
+		</div>
+
+		<!-- 시작 날짜 및 시간 -->
+		<div class="form-group">
+			<label for="input-start-datetime">시작 날짜 및 시간</label>
+			<div class="input-group date"
+			     date-time-picker
+			     date-time-picker-options="{{vm.options}}"
+					 on-date-hide-function="vm.isEndLaterThanStart()"
+			     ng-model="vm.registerInfo.confInfo.start_time">
+				<span class="input-group-addon">
+					<span class="glyphicon glyphicon-calendar"></span>
+				</span>
+				<input type='text' id="input-start-datetime">
+			</div>
+		</div>
+
+		<!-- 종료 날짜 및 시간 -->
+		<div class="form-group">
+			<label for="input-end-datetime">종료 날짜 및 시간</label>
+			<div class="input-group date"
+			     date-time-picker
+			     date-time-picker-options="{{vm.options}}"
+					 on-date-hide-function="vm.isEndLaterThanStart()"
+			     ng-model="vm.registerInfo.confInfo.end_time">
+				<span class="input-group-addon">
+          <span class="glyphicon glyphicon-calendar"></span>
+        </span>
+				<input type="text" id="input-end-datetime">
+			</div>
+		</div>
+
+		<!-- 컨퍼런스 주소 -->
+		<div class="form-group">
+			<label for="input-conf-address">주소</label>
+			<input type="text" id="input-conf-address" class="postcodify_address" ng-model="vm.registerInfo.confInfo.address">
+		</div>
+	</div>
+
+
+
+
+	<!-- Step2: 운영진 & 발표자 입력 -->
+	<div class="step-2" ng-if="vm.step.currentStep === 2">
+		<!-- 운영진 정보입력 -->
+		<div class="admin-info">
+			<div class="admin-info-title">
+				<h4>운영진 정보</h4>
+				<button class="add-admin btn btn-success btn-sm" data-toggle="modal"
+								data-target="#add-admin-modal">운영진 추가</button>
+			</div>
+			<table class="admin-table table table-hover">
+				<tr>
+					<th>이메일</th>
+					<th>타입</th>
+				</tr>
+				<tr ng-repeat="admin in vm.registerInfo.admins">
+					<td>
+						{{admin.email}}
+					</td>
+					<td>
+						{{admin.participation_type}}
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+
+
+	<!-- Step3: 트랙 및 세션 입력 -->
+	<div class="step-3" ng-if="vm.step.currentStep === 3">
+
+		<!-- 트랙 정보입력 -->
+		<div class="track-info">
+			<div class="track-info-title">
+				<h4>트랙 정보</h4>
+			</div>
+			<div class="track-add-container">
+				<button class="btn btn-success btn-sm" data-toggle="modal"
+								data-target="#add-track-modal">트랙 추가</button>
+			</div>
+			<table class="table track-table">
+				<tr>
+					<th>트랙</th>
+					<th>주제</th>
+					<th>장소</th>
+				</tr>
+				<tr ng-repeat="track in vm.registerInfo.tracks">
+					<td>Track {{$index + 1}}</td>
+					<td>
+						{{track.title}}
+					</td>
+					<td>
+						{{track.place}}
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<!-- 세션 정보입력 -->
+		<div class="register-session-info">
+			<div class="session-info-title">
+				<h4>세션 정보</h4>
+			</div>
+
+			<div class="session-add-container">
+				<!-- 날짜 선택 -->
+				<div class="dropdown select-day">
+					<button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
+									aria-haspopup="true" aria-expanded="true">
+						{{vm.selectedDay === undefined ?  '날짜 선택' : 'Day ' + (vm.selectedDay + 1)}}
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu" aria-labelledby="selectTrackDropdown">
+						<div ng-repeat="day in vm.dateToDayInfo()">
+							<li><button ng-click="vm.selectedDay = day">Day {{(day)}}</button></li>
+							<li role="separator" class="divider"></li>
+						</div>
+					</ul>
+				</div>
+
+				<!-- 트랙 선택 -->
+				<div class="dropdown select-track">
+					<button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
+									aria-haspopup="true" aria-expanded="true">
+						{{vm.selectedTrackIndex === undefined ? '트랙 선택' : 'Track ' + (vm.selectedTrackIndex + 1)}}
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu" aria-labelledby="selectTrackDropdown">
+						<div ng-repeat="track in vm.registerInfo.tracks" ng-if="vm.registerInfo.tracks.length > 0">
+							<li><button ng-click="vm.selectedTrackIndex = $index">Track {{($index + 1)}}</button></li>
+							<li role="separator" class="divider"></li>
+						</div>
+						<div ng-if="vm.registerInfo.tracks.length === 0">
+							<li>
+								<button data-toggle="modal"
+													data-target="#add-track-modal">트랙을 먼저 추가해주세요</button>
+							</li>
+						</div>
+					</ul>
+				</div>
+
+				<button class="add-session btn btn-success btn-sm" data-toggle="modal"
+								data-target="#add-session-modal">세션 추가</button>
+			</div>
+
+			<table class="table session-table">
+				<tr>
+					<th>세션 제목</th>
+					<th>설명</th>
+					<th>시간</th>
+					<th>PPT파일</th>
+				</tr>
+				<tr ng-repeat="session in vm.registerInfo.tracks[vm.selectedTrackIndex].sessions">
+					<td>
+						{{session.title}}
+					</td>
+					<td>
+						{{session.description}}
+					</td>
+
+					<td>
+						{{session.start_time}} ~ {{session.end_time}}
+					</td>
+					<td>
+						{{session.ppt_url}}
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+
+
+
+	<!-- 단계 이동 -->
+	<div class="step-move">
+		<div class="btn-group" role="group" aria-label="step-move-buttons">
+			<button type="button" class="btn btn-default" ng-click="vm.goPreviousStep()">이전</button>
+			<button type="button" class="btn btn-default" ng-click="vm.goNextStep()">{{vm.step.currentStep === 3 ? '완료' : '다음'}}</button>
+		</div>
+	</div>
+
+	<!-- 모달 -->
+	<ng-include src="'register/addSessionModalView.html'"></ng-include>
+	<ng-include src="'register/addTrackModalView.html'"></ng-include>
+	<ng-include src="'register/addAdminModalView.html'"></ng-include>
+
+
+</div>

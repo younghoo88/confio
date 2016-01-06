@@ -1,0 +1,185 @@
+// =========
+// 변수
+// =========
+
+// ===========
+// 컨퍼런스 단계
+// ===========
+
+
+
+.step-list {
+  @include list-style-none();
+  padding: 80px 20px;
+
+  li {
+    color: #a6a6a6;
+    text-align: center;
+  }
+
+  li.current-step {
+    color: #000;
+  }
+
+  .step-title {
+    font-size: 18px;
+  }
+}
+
+
+
+// ============
+// 컨퍼런스 기본정보
+// ============
+
+#input-conf-description {
+  height: 80px;
+}
+
+
+
+// ===========
+// 트랙
+// ===========
+
+.track-info-title {
+  text-align: center;
+
+  h4 {
+    display: inline-block;
+    font-size: 30px;
+  }
+}
+
+.track-add-container {
+  padding: 10px 0;
+  text-align: right;
+}
+
+.track-table {
+  @include label-disappear();
+
+  th,
+  td {
+    text-align: center;
+    vertical-align: middle !important;
+  }
+
+  input {
+    display: inline-block;
+  }
+}
+
+
+// ===========
+// 세션
+// ===========
+
+.register-session-info {
+  margin-top: 100px;
+}
+
+.session-add-container {
+  padding: 10px 0;
+
+  .select-day,
+  .select-track {
+    display: inline-block;
+  }
+}
+
+.session-info-title {
+  text-align: center;
+
+  h4 {
+    display: inline-block;
+    font-size: 30px;
+  }
+}
+
+.session-add-container {
+  .select-track {
+    display: inline-block;
+  }
+
+  .add-session {
+    float: right;
+  }
+}
+
+.session-table {
+  @include label-disappear();
+  text-align: center;
+
+
+  td:nth-child(1) {
+    width: 30%;
+  }
+
+  td:nth-child(2) {
+    width: 40%;
+  }
+
+  td:nth-child(3) {
+    width: 20%;
+  }
+
+  td:nth-child(4) {
+    width: 10%;
+  }
+}
+
+// ===========
+// 운영진
+// ===========
+
+.admin-info-title {
+  h4 {
+    display: inline-block;
+  }
+
+  .add-admin {
+    float: right;
+  }
+}
+
+.admin-table {
+  @include label-disappear();
+
+  td:nth-child(1) {
+    width: 50%;
+  }
+
+  td:nth-child(2) {
+    width: 20%;
+  }
+
+  td:nth-child(3) {
+    width: 30%;
+  }
+}
+
+
+// ===========
+// 단계 이동
+// ===========
+
+.step-move {
+  margin: 50px 0;
+  text-align: center;
+}
+
+
+// =======
+// 등록 모달
+// =======
+.register-modal {
+  padding: 30px;
+
+  .dropdown {
+    margin-bottom: 15px;
+  }
+}
+
+
+
