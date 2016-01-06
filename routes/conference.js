@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var cuid = require('cuid');
 var async = require('async');
+var isLoggedIn = require('../lib/common').isLoggedIn;
 var util = require('util');
 var nodemailer = require('nodemailer');
 var smtpPool = require('nodemailer-smtp-pool');
@@ -773,26 +774,24 @@ function getConferenceId(req, res, next) {
 }
 
 router.route('/')
-  .post(createConference)
-  .put(editConference)
-  .delete(deleteConference);
+  .post(isLoggedIn, createConference)
+  .put(isLoggedIn, editConference)
+  .delete(isLoggedIn, deleteConference);
 router.route('/participation/:emailLetter')
-  .post(createParticipation)
-  .put(editParticipation)
-  .get(searchEmail);
+  .get(isLoggedIn, searchEmail);
 router.route('/participation')
-  .post(createParticipation)
+  .post(isLoggedIn, createParticipation)
   .put(editParticipation);
 router.route('/track')
-  .post(createTrack)
-  .put(editTrack)
-  .delete(deleteTrack);
+  .post(isLoggedIn, createTrack)
+  .put(isLoggedIn, editTrack)
+  .delete(isLoggedIn, deleteTrack);
 router.route('/track/session')
-  .post(createSession)
-  .put(editSession)
-  .delete(deleteSession);
-router.get('/sendEmail', sendEmail);
+  .post(isLoggedIn, createSession)
+  .put(isLoggedIn, editSession)
+  .delete(isLoggedIn, deleteSession);
+router.get('/sendEmail', isLoggedIn, sendEmail);
 router.get('/:conference_id', getConferenceInfo);
-router.post('/getConferenceId', getConferenceId);
+router.post('/getConferenceId', isLoggedIn, getConferenceId);
 
 module.exports = router;
