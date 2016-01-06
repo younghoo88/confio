@@ -187,9 +187,9 @@ router.post('/', join);
 router.get('/login', getLoginForm);
 router.post('/login', authenticateLocalLogin, login);
 router.get('/logout', isLoggedIn, logout);
-router.put('/change', editUser);
+router.put('/change', isLoggedIn, editUser);
 router.get('/mailCheck/:email', checkEmail);
-router.delete('/delete', deleteUser);
-router.get('/myconferencelist', getMyConferenceList);
+router.delete('/delete', isLoggedIn, deleteUser);
+router.get('/myconferencelist', isLoggedIn, getMyConferenceList);
 
 module.exports = router;

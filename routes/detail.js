@@ -137,44 +137,45 @@ function getSession(req, res, next) {
 
   // 페이지 렌더링
   // client event 처리용이고 angular와 합칠때 제거 예정
-  res.render('index', {conference_id : conference_id, track_id : track_id, session_id : session_id});
+  // res.render('index', {conference_id : conference_id, track_id : track_id, session_id : session_id});
 
-  // TODO : Database 연동부분 구현
-  /*
-  var result = {
-    success : 1,
-    result : {
-      conference : {
-        id : 1,
-        title : 'NaverD2FEST',
-        start_time : '2016-01-06 08:00',
-        end_time : '2016-01-06 18:00',
-        track : [
-          {
-            id : 1,
-            order : 1,
-            title : '웹프로그래밍',
-            place : 'A홀',
-            session : [
-              {
-                id : 1,
-                title : 'Facebook React.js',
-                start_time : '2015-01-06 10:00',
-                end_time : '2015-01-06 12:00'
-              }
-            ]
-          }
-        ]
-      }
+  global.connectionPool.getConnection(function(err, connection) {
+
+    if (err) {
+      global.logger.debug(err);
+      connection.release();
+      return next(err);
     }
-  };
-  res.json(result);
-  */
-}
 
-function putMessage(req, res, next) {
-  // TODO : 삭제 예정(Socket.io를 이용해 메시지를 주고받기 때문에 putMessage가 필요없어졌다.)
-  res.json({});
+    var selectQuery = 'SELECT c.conference_id, c.title, c.description, c.address, c.code, ' +
+                      't.track_id, t.title track_title, t.place, t.sequnece, ' +
+                      's.session_id, s.title session_title, s.description, s.presentation_url, ' +
+                      's.start_time, s.end_time ' +
+                      'FROM conference c ' +
+                      'JOIN track t ' +
+                      'ON c.conference_id = t.conference_id ' +
+                      'JOIN session s ' +
+                      'ON t.track_id = s.track_id ' +
+                      'WHERE session_id = ?';
+
+    connection.query(selectQuery, [session_id], function(err, rows, fields) {
+
+      if (err) {
+        global.logger.debug(err);
+        connection.release();
+        return next(err);
+      }
+
+      res.status(200).json({
+        success : 1,
+        result : rows[0]
+      });
+
+      global.logger.debug('세션 정보 조회 완료');
+      connection.release();
+
+    });
+  });
 }
 
 function getQuestion(req, res, next) {
@@ -278,7 +279,6 @@ function addAnswerLike(req, res, next) {
 }
 
 router.get('/:conference_id/:track_id/:session_id', getSession);
-// router.post('/:conference_id/:track_id/:session_id/chat', putMessage);
 router.get('/:conference_id/:track_id/:session_id/question/:question_id', getQuestion);
 router.route('/:conference_id/:track_id/:session_id/question')
   .post(addQuestion)
