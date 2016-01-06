@@ -179,11 +179,17 @@ function getSession(req, res, next) {
   });
 }
 
-/**DONE**/
+/**
+ * Name : getSessionQuestion
+ * URL : GET /detail/:conference_id/:track_id/:session_id/info
+ * Description : 컨퍼런스의 특정 트랙의 특정 세션의 question list를 볼 수 있는 뷰
+ * Params : conference_id(컨퍼런스 아이디), track_id(트랙 아이디), session_id(세션 아이디)
+ * HTTP Body :
+ * Session : 필요함
+ **/
 function getSessionQuestion(req, res, next) {
   global.connectionPool.getConnection(function(err, connection) {
     global.logger.debug('here i am ');
-
     if (err) {
       global.logger.error(err);
       connection.release();
@@ -191,6 +197,11 @@ function getSessionQuestion(req, res, next) {
       return;
     }
 
+    /*
+     * Table     : question
+     * Columns   : question_id, user_id, content, like_count
+     * Query 설명 : is_valid = 1(자료가 유효한 값)이고 session_id에 해당하는 question 을 인기도 순서로 조회
+     * */
     var select = 'SELECT question_id, user_id, content, like_count ' +
                 'FROM question ' +
                 'WHERE session_id = ? and is_valid =1 ' +
@@ -204,7 +215,7 @@ function getSessionQuestion(req, res, next) {
         next(err);
         return;
       }
-
+      //will be the result of SELECT, not insert the result of select yet
       var result = {
         success : 1,
         questionList : []
@@ -214,12 +225,12 @@ function getSessionQuestion(req, res, next) {
        result.questionList.push(row);
         cb();
      }, function(err) {
-      if(err) {
-        global.logger.error('에러발생');
-        connection.release();
-        return next(err);
-      }
-       global.logger.debug('sucessful done!!!!!');
+       if(err) {
+         global.logger.error('에러발생');
+         connection.release();
+         return next(err);
+       }
+       global.logger.debug('successful done!!!!!');
 
        res.json(result);
        connection.release();
@@ -228,7 +239,15 @@ function getSessionQuestion(req, res, next) {
   }); // end of global.connectionPool
 }
 
-/**DONE**/
+/**
+ * Name : getQuestion
+ * URL : POST /detail/:conference_id/:track_id/:session_id/question/:question_id
+ * Description :
+ * Params : conference_id(컨퍼런스 아이디), track_id(트랙 아이디), session_id(세션 아이디)
+ *          question_id(질문 아이디)
+ * HTTP Body :
+ * Session : 필요함
+ **/
 function getQuestion(req, res, next) { //상세페이지
   process.nextTick(function() {
     async.waterfall([
@@ -240,6 +259,11 @@ function getQuestion(req, res, next) { //상세페이지
             connection.release();
             callback(err);
           }
+          /*
+           * Table     : question
+           * Columns   : question_id, session_id, user_id, content, create_time, like_count
+           * Query 설명 : session_id에 해당하는 결과값 조회
+           * */
           var query = "SELECT question_id, session_id, user_id, content, create_time, like_count " +
                       "FROM question " +
                       "WHERE session_id = ? and is_valid = 1"; // question_id를 session_id로 수정함.
@@ -250,9 +274,6 @@ function getQuestion(req, res, next) { //상세페이지
               // 에러처리
               connection.release();
               err.message='question 조회 중 에러 ';
-
-              // 로그찍고
-              // 콜백을 하든 넥스트를 하든
             }
 
             global.logger.debug('question 조회 완료!');
@@ -547,7 +568,7 @@ function addAnswerLike(req, res, next) {
 router.get('/:conference_id/:track_id/:session_id', getSession);
 router.get('/:conference_id/:track_id/:session_id/info', getSessionQuestion);
 router.get('/:conference_id/:track_id/:session_id/question/:question_id', getQuestion);
-router.route('/:conference_id/:track_id/:session_id/question')
+router.route('/:conference_idㅅ/:track_id/:session_id/question')
   .post(addQuestion)
   .put(editQuestion)
   .delete(deleteQuestion);

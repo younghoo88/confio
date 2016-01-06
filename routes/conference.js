@@ -111,20 +111,10 @@ function deleteConference(req, res, next) {
  * URL : POST /confernece/participation
  * Description : 컨퍼런스에 속하게 될 운영진, 발표자, 참가자를 등록한다.
  * Params :
- * HTTP Body : email, conference_id, participation_type
+ * HTTP Body : user_id, participaion_type_id, confernec_id
  * Session : 필요함
  **/
 function createParticipation(req, res, next) {
-
-  /**
-   * async.series
-   *
-   * task 순서
-   *
-   * 회원의 타입이 등록
-   *
-   *
-   */
   async.waterfall([
     function insertToParticipation(callback) {
       global.connectionPool.getConnection(function(err, connection) {
@@ -136,7 +126,7 @@ function createParticipation(req, res, next) {
 
         /*
          * Table     : participation
-         * Columns   : user_id(user의 테이블의 PK),
+         * Columns   : user_id (user의 테이블의 PK),
          *              participation_type_id (참여 타입 아이디), conference_id (PK of conference)
          * Query 설명 : 회원(user)와 conference 관의 관계 정의(참여자, 주최자, 운영자, 발표자)
          * */
@@ -164,9 +154,7 @@ function createParticipation(req, res, next) {
         }); //end of connection
       });
     },
-
     function getUserMailAndCode(userId, callback) {
-
       async.parallel({
         email : function getUserMail(cb) {
           global.connectionPool.getConnection(function(err, connection) {
@@ -175,7 +163,11 @@ function createParticipation(req, res, next) {
               connection.release();
               return cb(err);
             }
-
+            /*
+             * Table     : user
+             * Columns   : email
+             * Query 설명 : user_id(PK of user)에 하는 email
+             * */
             var selectQuery = 'SELECT email ' +
                               'FROM user ' +
                               'WHERE user_id = ?';
@@ -186,7 +178,6 @@ function createParticipation(req, res, next) {
                 connection.release();
                 return cb(err);
               }
-
               global.logger.debug('email 조회 성공');
               cb(null, rows[0].email);
             }); // end of connection.query()
@@ -200,6 +191,10 @@ function createParticipation(req, res, next) {
               return cb(err);
             }
 
+            /* Table     : conference
+             * Columns   : code
+             * Query 설명 : conference_id에 해당하는 conference의 code
+             * */
             var selectQuery = 'SELECT code ' +
                               'FROM conference ' +
                               'WHERE conference_id = ?';
@@ -225,7 +220,6 @@ function createParticipation(req, res, next) {
         callback(null, result.email, result.code);
       });
     }, // end of getUserMail() task
-
     function sendMailToUser(email, code, callback) {
 
       var transporter = nodemailer.createTransport(smtpPool({
@@ -288,7 +282,14 @@ function editParticipation(req, res, next) {
   };
   res.json(result);
 }
-/**DONE **/
+/**
+ * Name : searchEmail
+ * URL : GET /conference/participation/:emailLetter
+ * Description : emailLetter로 시작하는 이메일 리스트를 5개를 select
+ * Params : emailLetter
+ * HTTP Body :
+ * Session : 필요함
+ **/
 function searchEmail(req, res, next) {  //이메일 ~로 시작하는 LIST 5개씩 보냄
   global.connectionPool.getConnection(function(err, connection) {
     global.logger.debug('HERE I AM FROM searchEmail');
@@ -300,8 +301,8 @@ function searchEmail(req, res, next) {  //이메일 ~로 시작하는 LIST 5개�
     }
 
     var headQuery = 'SELECT email ' +
-                      'FROM user ' + //
-                       'WHERE email like \'';
+                    'FROM user ' +
+                    'WHERE email like \'';
     var selectQuery = headQuery + req.params.emailLetter + '%\' ' +'limit 5';//
 
     connection.query(selectQuery, [], function(err, rows, info) {
@@ -311,7 +312,7 @@ function searchEmail(req, res, next) {  //이메일 ~로 시작하는 LIST 5개�
         next(err);
         return;
       }
-    // 결과값을 담을 Result
+    //result of select
     var result = {
       success : 1,
       emailList : []
@@ -327,32 +328,31 @@ function searchEmail(req, res, next) {  //이메일 ~로 시작하는 LIST 5개�
        }
        res.json(result);
        connection.release();
-
-     }); //end of async
-
-
+     }); //end of  async.each()
     }); //end of connection
   }); // end of global.connectionPool
 }
-
-
 /**
 * Name : createTrack
-* URL :
-* Description :
+* URL : POST /conference/track
+* Description : track 테이블에 track values를 저장
 * Params :
-* Session :
+ *Body : conference_id, sequnece, title, place
+* Session : 필요
 **/
 function createTrack(req, res, next) {
   global.connectionPool.getConnection(function(err, connection) {
-
     if (err) {
       global.logger.error(err);
       connection.release();
       next(err);
       return;
     }
-
+    /*
+     * Table     : track
+     * Columns   : conference_id, sequnece, title, place
+     * Query 설명 : track 테이블에 track의 FK로 설정된 conference_id, sequnece, title, place 저장
+     * */
     var insertQuery = 'INSERT INTO track ' +
                       '(conference_id, sequnece, title, place) ' +
                       'VALUES (?, ?, ?, ?)';
@@ -364,14 +364,13 @@ function createTrack(req, res, next) {
         next(err);
         return;
       }
-
+      // insert 성공 메세지
       var result = {
         success : 1,
         result : {
           message : '트랙 정보가 정상적으로 등록되었습니다.'
         }
       };
-
       res.json(result);
       global.logger.debug('데이터베이스 연결을 종료합니다.');
       connection.release();
@@ -510,7 +509,6 @@ function getConferenceInfo(req, res, next) {
    *                                                                    |           조회된 session 배열을 저장한다.
    */
   async.waterfall([
-
     function getConferenceInfo(callback) {
       global.connectionPool.getConnection(function(err, connection) {
         if (err) {
@@ -519,10 +517,15 @@ function getConferenceInfo(req, res, next) {
           return callback(err);
         }
 
+        /*
+         * Table     : conference
+         * Columns   : conference_id, title, start_time, end_time, description, address, latitude, longitude, code, is_open, is_valid
+         * Query 설명 : conference_id에 해당하는 conference 테이블의 정보 조회
+         * */
         var selectQuery = "SELECT conference_id, title, start_time, end_time, description, address, " +
-          "latitude, longitude, code, is_open, is_valid " +
-          "FROM conference " +
-          "WHERE conference_id = ?";
+                          "latitude, longitude, code, is_open, is_valid " +
+                          "FROM conference " +
+                          "WHERE conference_id = ?";
         var placeHolders = [conferenceId];
         connection.query(selectQuery, placeHolders, function(err, rows, fields) {
           if (err) {
@@ -530,7 +533,7 @@ function getConferenceInfo(req, res, next) {
             connection.release();
             return callback(err);
           }
-
+          // select 결과가 0일 경우
           if (rows.length === 0) {
             res.status(200).json({
               success : 0,
@@ -539,7 +542,7 @@ function getConferenceInfo(req, res, next) {
             connection.release();
             return;
           }
-
+          // select 값이 삭제된 경우
           if (rows.is_valid === 0) {
             res.status(200).json({
               success : 0,
@@ -557,21 +560,22 @@ function getConferenceInfo(req, res, next) {
       });
     },
     function getTrackInfo(conferenceInfo, callback) {
-
       global.connectionPool.getConnection(function(err, connection) {
-
         if (err) {
           global.logger.debug('getTrackInfo() db connection 중 에러 발생');
           connection.release();
           return callback(err);
         }
 
-        // 트랙정보 가져오기
+        /*
+         * Table     : track
+         * Columns   : track_id, conference_id, sequnece, title, place, is_valid
+         * Query 설명 : confenrece_id에 해당하는 track 정보 조회
+         * */
         var selectTrackQuery = "SELECT track_id, conference_id, sequnece, title, place, is_valid " +
-          "FROM track " +
-          "WHERE conference_id= ?";
+                               "FROM track " +
+                               "WHERE conference_id= ?";
         var placeHolders = [conferenceId];
-
         connection.query(selectTrackQuery, placeHolders, function(err, rows, fields) {
           if (err) {
             global.logger.debug('트랙 정보 조회 중 에러 발생');
@@ -587,25 +591,21 @@ function getConferenceInfo(req, res, next) {
       });
     },
     function getSessionInfo(conferenceInfo, trackArrInfo, callback) {
-
       global.logger.debug('getSessionInfo task 진입');
       global.logger.debug('conferenceInfo : ' + util.inspect(conferenceInfo));
       global.logger.debug('trackInfo : ' + util.inspect(trackArrInfo));
 
       conferenceInfo.track = [];
-
       global.logger.debug('async.each 시작');
       async.each(trackArrInfo, function(track, cb) {
 
         global.logger.debug('async.waterfall 시작');
         async.waterfall([
-
           function pushTrackToConferenceInfo(sessionCallback) {
             global.logger.debug('track : ' + util.inspect(track));
-            conferenceInfo.track.push(track); // conferenceInfo객체의 track 배열 property에 한개의 track 객체를 push함
+            conferenceInfo.track.push(track); // conferenceInfo객체의 track 배열 property에 한개의 track 객체를 push
             sessionCallback(null, conferenceInfo.track.length-1);
           },
-
           function getSession(trackIndex, sessionCallback) {
             global.connectionPool.getConnection(function(err, connection) {
               if (err) {
@@ -616,16 +616,19 @@ function getConferenceInfo(req, res, next) {
 
               global.logger.debug('track index : ' + trackIndex);
               global.logger.debug('track id : ' + track.track_id);
-
+              /*
+               * Table     : session
+               * Columns   : session_id, participation_id, category_id, track_id, title, description,
+                             presentation_url, start_time, end_time, is_valid
+               * Query 설명 : track_id에 해당하는 is_valid=1(유효한 값의미)인 row를 조회
+               */
               var selectSessionQuery = "SELECT session_id, participation_id, category_id, track_id, title, description, " +
-                "presentation_url, start_time, end_time, is_valid " +
-                "FROM session " +
-                "WHERE track_id = ? and is_valid = 1";
-
+                                       "presentation_url, start_time, end_time, is_valid " +
+                                       "FROM session " +
+                                       "WHERE track_id = ? and is_valid = 1";
               var placeHolder = [track.track_id];
 
               connection.query(selectSessionQuery, placeHolder, function(err, rows, fields) {
-
                 if (err) {
                   global.logger.debug('세션 정보 조회 중 에러 발생');
                   connection.release();
@@ -637,7 +640,6 @@ function getConferenceInfo(req, res, next) {
               });
             });
           },
-
           function pushToTrack(trackIndex, sessionInfo, sessionCallback) {
             global.logger.debug('session property 추가 : ' + util.inspect(conferenceInfo.track[trackIndex]));
             try {
@@ -673,9 +675,15 @@ function getConferenceInfo(req, res, next) {
     });
   });
 }
-
+/**
+ * Name : sendEmail
+ * URL : GET /conference/participation/:emailLetter
+ * Description : 컨퍼런스 관련 정보를 해당 컨퍼런스에 관계를 맺고 있는 유저에게 메일을 보내는 기능
+ * Params :
+ * HTTP Body : email, subject, content, htmlContent
+ * Session : 필요함
+ **/
 function sendEmail(req, res, next) {
-
   var email = req.body.email;
   var subject = req.body.subject;
   var content = req.body.content;
@@ -716,7 +724,14 @@ function sendEmail(req, res, next) {
     });
   });
 }
-
+/**
+ * Name : getConferenceId
+ * URL : POST conference/getConferenceId
+ * Description : confenrece code 조회 메소드
+ * Params :
+ * HTTP Body : code
+ * Session : 필요함
+ **/
 function getConferenceId(req, res, next) {
   var conferenceCode = req.body.code;
 
@@ -726,7 +741,11 @@ function getConferenceId(req, res, next) {
       connection.release();
       return next(err);
     }
-
+    /*
+     * Table     : conference
+     * Columns   : conference_id
+     * Query 설명 : 해당 code의 conference_id조회
+     * */
     var selectQuery = 'SELECT conference_id ' +
                       'FROM conference ' +
                       'WHERE code = ?';
@@ -737,11 +756,11 @@ function getConferenceId(req, res, next) {
         connection.release();
         return next(err);
       }
-
+      //if the conference doesn't exist
       if (rows.length === 0) {
         return next({message : '존재하지 않는 컨퍼런스입니다. 코드를 다시 확인해보세요.'});
       }
-
+      //success message of SELECT
       res.status(200).json({
         success : 1,
         result : {
