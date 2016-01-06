@@ -7,7 +7,20 @@ var mongoose = require('mongoose');
 var session = require('../config/session').sessionMiddleware;
 var util = require('util');
 var async = require('async');
-
+/**
+ * File Name : detail.js
+ * Description : '/detail'로 들어오는 RESTful API를 받아서 처리한다
+ * Function : 1. getSession
+ *            2. getSessionQuestion
+ *            3. addQuestion
+ *            4. editQuestion
+ *            5. deleteQuestion
+ *            6. addAnswer
+ *            7. deleteAnswer
+ *            8. addQuestionLike
+ *            9. addAnswerLike
+ *
+ * */
 io.use(function(socket, next) {
   session(socket.request, socket.request.res, next);
 });
@@ -289,6 +302,11 @@ function getQuestion(req, res, next) { //상세페이지
             connection.release();
             callback(err);
           }
+          /*
+           * Table     : answer
+           * Columns   : answer_id, question_id, user_id, content answer_content, like_count
+           * Query 설명 : qustion_id 해당하는 answer 정보 조회
+           * */
           var query = "SELECT answer_id, question_id, user_id, content answer_content, like_count " +
                       "FROM answer " +
                       "WHERE is_valid = 1 and question_id = ? " +
@@ -300,11 +318,9 @@ function getQuestion(req, res, next) { //상세페이지
               // 에러처리
               connection.release();
               err.message=' 조회 중 에러 ';
-
               // 로그찍고
               // 콜백을 하든 넥스트를 하든
             }
-
             global.logger.debug(' 조회 완료!');
             callback(null, questionList, rows);
           }); // end of connection.query
@@ -315,7 +331,6 @@ function getQuestion(req, res, next) { //상세페이지
           question: questionList,
           answerList: []
         }; //need to process
-
         async.each(answerList, function(row, cb) {
           result.answerList.push(row);
           cb();
@@ -334,9 +349,7 @@ function getQuestion(req, res, next) { //상세페이지
   }); // end of process.nextTick
 }
 
-/**DONE**/
 function addQuestion(req, res, next) {
-
   global.connectionPool.getConnection(function(err, connection) {
     if (err) {
       global.logger.error(err);
@@ -344,7 +357,11 @@ function addQuestion(req, res, next) {
       next(err);
       return;
     }
-
+    /*
+     * Table     : question
+     * Columns   : session_id, user_id, content, create_time, like_count, is_valid
+     * Query 설명 : param으로 넘어 오는 값을 insert
+     * */
     var insertQuestion = "INSERT INTO question(session_id, user_id, content, create_time, like_count, is_valid) " +
                          "VALUES (?, ?, ?, now(), 0, 1)";
 
@@ -355,7 +372,7 @@ function addQuestion(req, res, next) {
         next(err);
         return;
       }
-
+      //the result of inserts message
       var result = {
         success : 1,
         result : {
@@ -367,7 +384,6 @@ function addQuestion(req, res, next) {
     }); //end of connection
   }); // end of global.connectionPool
 }
-
 /** NOT COMPLETE & NEED TO CODE NEITHER **/
 function editQuestion(req, res, next) {
   var userId = req.body.user_id;
@@ -381,7 +397,6 @@ function editQuestion(req, res, next) {
   };
   res.json(result);
 }
-
 /** NOT COMPLETE & NEED TO CODE NEITHER **/
 function deleteQuestion(req, res, next) {
   var userId = req.body.user_id;
@@ -394,8 +409,15 @@ function deleteQuestion(req, res, next) {
   };
   res.json(result);
 }
+/**
+ * Name : addAnswer
+ * URL : POST /detail/:conference_id/:track_id/:session_id/question/answer
+ * Description : 답변을 다는 메소드
+ * Params :
+ * HTTP Body : question_id, content
+ * Session : 필요함
+ **/
 
-/**DONE**/
 function addAnswer(req, res, next) {
   ///:conference_id/:track_id/:session_id/question/answer'
   global.connectionPool.getConnection(function(err, connection) {
@@ -432,10 +454,16 @@ function deleteAnswer(req, res, next) {
   var userId = req.body.user_id;
   var answerId = req.body.answer_id;
 }
-
-/**DONE**/
+/**
+ * Name : addQuestionLike
+ * URL : POST /conference/:conference_id/:track_id/:session_id/question/like
+ * Description : question에 '좋아요'를 등록할 수 있다.
+ *               question_like table이 insert되고 question의 like_count가 업데이트된다.
+ * Params :
+ * HTTP Body : question_id
+ * Session : 필요함
+ **/
 function addQuestionLike(req, res, next) {
-
   process.nextTick(function () {
     global.connectionPool.getConnection(function (err, connection) {
       connection.beginTransaction(function (err) {
@@ -443,9 +471,14 @@ function addQuestionLike(req, res, next) {
           err.message = '연결이 원활하지 않습니다. 다시 시도해주시기 바랍니다.';
           return next(err);
         }
-
         async.series([
           function(callback) {
+
+            /*
+             * Table     : question_like
+             * Columns   : user_id, question_id, create_time
+             * Query 설명 : 현재 세션의 user_id와 question_id, 현재 시간을 입력
+             * */
             var query = "INSERT INTO question_like (user_id, question_id, create_time) VALUES (?, ?, now())";
             global.logger.debug('user:  ' + req.user.user_id);
             global.logger.debug('req.body.question ' + req.body.question_id);
@@ -458,6 +491,11 @@ function addQuestionLike(req, res, next) {
             }); // end of connection.query
           },
           function(callback) {
+            /*
+             * Table     : question
+             * Columns   : like_count (좋아요 갯수)
+             * Query 설명 : like_count 를 업데이트
+             * */
             var query = "UPDATE question SET like_count = like_count + 1 WHERE question_id= ?";
             connection.query(query, [req.body.question_id], function (err, result) {
               if (err) {
@@ -498,10 +536,15 @@ function addQuestionLike(req, res, next) {
     }); // end of process.nextTick();
   });
 }
-
-/**DONE**/
+/**
+ * Name : addAnswerLike
+ * URL : POST /conference/:conference_id/:track_id/:session_id/question/answer/like
+ * Description : question의 해당 answer의 좋아요 등록
+ * Params :
+ * HTTP Body : answer_id
+ * Session : 필요함
+ **/
 function addAnswerLike(req, res, next) {
-
   process.nextTick(function () {
     global.connectionPool.getConnection(function (err, connection) {
       connection.beginTransaction(function (err) {
@@ -509,13 +552,16 @@ function addAnswerLike(req, res, next) {
           err.message = '연결이 원활하지 않습니다. 다시 시도해주시기 바랍니다.';
           return next(err);
         }
-
         async.series([
           function(callback) {
+            /*
+             * Table     : answer_like
+             * Columns   : user_id, answer_id, create_time
+             * Query 설명 : answer_like 값 insert
+             * */
             var query = "INSERT INTO answer_like (user_id, answer_id, create_time) VALUES (?, ?, now());";
             global.logger.debug('req.body.question ' + req.body.answer_id);
             global.logger.debug('req.body.user_id ' + req.user.user_id);
-
             connection.query(query, [req.user.user_id, req.body.answer_id], function (err, info) {
               if (err) {
                 return callback(err);
@@ -524,6 +570,11 @@ function addAnswerLike(req, res, next) {
             }); // end of connection.query
           },
           function(callback) {
+            /*
+             * Table     : answer
+             * Columns   : like_count
+             * Query 설명 : is_valid = 1(값이 유효함 의미), 해당 answer_id에 해당하는 answer의 like_count 업데이트
+             * */
             var query = "UPDATE answer SET like_count = like_count + 1 WHERE answer_id = ? and is_valid = 1";
             global.logger.debug('callback 2 :   ' + req.user.user_id);
             connection.query(query, [req.body.answer_id], function (err, result) {

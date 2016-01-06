@@ -4,13 +4,20 @@ var passport = require('passport');
 var isLoggedIn = require('../lib/common').isLoggedIn;
 var util = require('util');
 var async = require('async');
-
 /**
- * 회원가입
- * @param req
- * @param res
- * @param next
+ * File Name : user.js
+ * Description : '/user'로 들어오는 RESTful API를 받아서 처리한다
+ * Function : 1. join
+ *            2. getLoginForm
+ *            3. login
+ *            4. logout
+ *            5. editUser
+ *            6. checkEmail
+ *            7. deleteUser
+ *            8. getMyConferenceList
+ *
  */
+/** DONE**/
 function join(req, res, next) {
 
   passport.authenticate('local-signup', function(err, user, info) {
@@ -68,14 +75,14 @@ function authenticateLocalLogin(req, res, next) {
     });
   })(req, res, next);
 }
-
-
 /**
- * 로그인
- * @param req
- * @param res
- * @param next
- */
+ * Name : login
+ * URL : POST /user/login
+ * Description :. 로그인
+ * Params :
+ * HTTP Body : email
+ * Session : 필요하지않음
+ **/
 function login(req, res, next) {
   var result = {
     success : 1,
@@ -88,11 +95,13 @@ function login(req, res, next) {
 }
 
 /**
- * 로그아웃
- * @param req
- * @param res
- * @param next
- */
+ * Name :logout
+ * URL : POST /user/logout
+ * Description : 로그아웃
+ * Params :
+ * HTTP Body :
+ * Session : 필요함
+ **/
 function logout(req, res, next) {
   global.logger.debug("logout => " + util.inspect(req.user));
   req.logout();
@@ -123,13 +132,14 @@ function editUser(req, res, next) {
   };
   res.json(result);
 }
-
 /**
- * 이메일 중복 확인
- * @param req
- * @param res
- * @param next
- */
+ * Name : checkEmail
+ * URL : POST /user/mailCheck/:email'
+ * Description : email에 해당 하는 user_id
+ * Params : email
+ * HTTP Body :
+ * Session : 필요함
+ **/
 function checkEmail(req, res, next) {
   global.connectionPool.getConnection(function(err, connection) {
     if (err) {
@@ -138,7 +148,11 @@ function checkEmail(req, res, next) {
       next(err);
       return;
     }
-
+    /*
+     * Table     : user
+     * Columns   : user_id
+     * Query 설명 : email에 해당하는 user_id조회
+     * */
     var selectEmail = 'SELECT user_id '+
                       'FROM user ' +
                       'WHERE email = ? and is_valid =1';
@@ -156,7 +170,7 @@ function checkEmail(req, res, next) {
         success : 1,
         result : (rows.length > 0) ? '사용 중인 이메일입니다' : '사용이 가능한 이메일 입니다.'
       };
-    res.json(result);
+       res.json(result);
       connection.release();
     }); //end of connection
   }); // end of global.connectionPool
@@ -178,13 +192,14 @@ function deleteUser(req, res, next) {// TODO : 구현예정
   };
   res.json(result);
 }
-
 /**
- * 참여했던 컨퍼런스 목록 보기(마이 페이지)
- * @param req
- * @param res
- * @param next
- */
+ * Name : getMyConferenceList
+ * URL : GET /user/myconferencelist
+ * Description : 내가 참여한 컨퍼런스 리스트 들 조회
+ * Params :
+ * HTTP Body : 
+ * Session : 필요함
+ **/
 function getMyConferenceList(req, res, next) {
   global.connectionPool.getConnection(function(err, connection) {
     if (err) {
