@@ -143,6 +143,15 @@ io.on('connection', function(socket) {
     global.logger.debug('--------------------\n');
   });
 });
+
+function getChat(req, res, next) {
+  var conference_id = req.params.conference_id;
+  var track_id = req.params.track_id;
+  var session_id = req.params.session_id;
+
+  res.render('index', {conference_id : conference_id, track_id : track_id, session_id : session_id});
+}
+
 /** NOT COMPLETE & NEED TO CODE NEITHER **/
 function getSession(req, res, next) {
   var conference_id = req.params.conference_id;
@@ -628,5 +637,6 @@ router.route('/:conference_id/:track_id/:session_id/question/answer')
   .delete(deleteAnswer);
 router.post('/:conference_id/:track_id/:session_id/question/like', addQuestionLike);
 router.post('/:conference_id/:track_id/:session_id/question/answer/like', addAnswerLike);
+router.get('/getChat/:conference_id/:track_id/:session_id', getChat);
 
 module.exports = router;

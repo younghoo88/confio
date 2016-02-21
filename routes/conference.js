@@ -790,7 +790,7 @@ router.route('/track/session')
   .post(isLoggedIn, createSession)
   .put(isLoggedIn, editSession)
   .delete(isLoggedIn, deleteSession);
-router.get('/sendEmail', isLoggedIn, sendEmail);
+router.post('/sendEmail', isLoggedIn, sendEmail);
 router.get('/:conference_id', getConferenceInfo);
 router.post('/getConferenceId', isLoggedIn, getConferenceId);
 

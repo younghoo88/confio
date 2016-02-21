@@ -4,14 +4,14 @@ var options = {
   host : 'localhost',
   port : 3306,
   user : 'root',
-  password : '1234',
+  password : '12345678',
   database : 'confio',
   useConnectionPooling : true
 };
 
 var sessionMiddleware = session({
   store : new SessionStore(options),
-  secret : '1234',
+  secret : '12345678',
   cookie : {
     maxAge : 86400000
   },
